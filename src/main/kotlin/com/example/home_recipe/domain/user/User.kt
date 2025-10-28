@@ -13,7 +13,7 @@ class User(
     @Column(nullable = false)
     var refrigeratorId: Long? = null,
 
-    @Column(nullable = false, length = 50, unique = true)
+    @Column(nullable = false, length = 20, unique = true)
     var loginId: String,
 
     @Column(nullable = false, length = 255)
