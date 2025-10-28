@@ -1,4 +1,4 @@
-package com.example.home_recipe.domain
+package com.example.home_recipe.domain.user
 
 import jakarta.persistence.*
 
@@ -23,20 +23,26 @@ class User(
     var email: String,
 
     @Column(nullable = false, length = 11, unique = true)
-    var phoneNumber: String
+    var phoneNumber: String,
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 10)
+    var role: Role = Role.USER
 ) {
     constructor(
         loginId: String,
         password: String,
         email: String,
-        phoneNumber: String
+        phoneNumber: String,
+        role: Role = Role.USER
     ) : this(
         id = null,
         refrigeratorId = null,
         loginId = loginId,
         password = password,
         email = email,
-        phoneNumber = phoneNumber
+        phoneNumber = phoneNumber,
+        role = role
     )
 
     fun assignRefrigerator(refrigeratorId: Long) {
