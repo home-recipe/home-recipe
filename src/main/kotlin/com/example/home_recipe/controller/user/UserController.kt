@@ -5,6 +5,7 @@ import com.example.home_recipe.controller.user.dto.UserResponse
 import com.example.home_recipe.global.response.ApiResponse
 import com.example.home_recipe.global.response.ResponseCode
 import com.example.home_recipe.service.user.UserService
+import jakarta.validation.Valid
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.PostMapping
@@ -20,7 +21,7 @@ class UserController(
 ) {
 
     @PostMapping
-    fun join(@RequestBody request: JoinRequest): ResponseEntity<ApiResponse<UserResponse>> {
+    fun join(@Valid @RequestBody request: JoinRequest): ResponseEntity<ApiResponse<UserResponse>> {
         return ApiResponse.success(userService.join(request), ResponseCode.SIGNUP_SUCCESS, HttpStatus.CREATED)
     }
 }
