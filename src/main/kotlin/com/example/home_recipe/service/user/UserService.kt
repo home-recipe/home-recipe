@@ -11,39 +11,43 @@ import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.stereotype.Service
 
 @Service
-class UserService (
+class UserService(
     private val userRepository: UserRepository,
     private val passwordEncoder: PasswordEncoder
 ) {
-    fun join(request : JoinRequest) : UserResponse {
-        val loginId = request.name
+    fun join(request: JoinRequest): UserResponse {
+        val loginId = request.loginId
         val email = request.email
         val phoneNumber = request.phoneNumber
         val encryptedPassword = passwordEncoder.encode(request.password)
         val name = request.name
 
-        if(userRepository.existsByLoginId(loginId)) {
+        if (userRepository.existsByLoginId(loginId)) {
             throw BusinessException(ResponseCode.SIGNUP_ERROR_007)
         }
-        if(userRepository.existsByEmail(email)) {
+        if (userRepository.existsByEmail(email)) {
             throw BusinessException(ResponseCode.SIGNUP_ERROR_005)
         }
-        if(userRepository.existsByPhoneNumber(phoneNumber)) {
+        if (userRepository.existsByPhoneNumber(phoneNumber)) {
             throw BusinessException(ResponseCode.SIGNUP_ERROR_008)
         }
 
-        return toDto(userRepository.save(User(
-            loginId = loginId,
-            password = encryptedPassword,
-            name = name,
-            email = email,
-            phoneNumber = phoneNumber,
-            role = Role.USER
-        )))
+        return toDto(
+            userRepository.save(
+                User(
+                    loginId = loginId,
+                    password = encryptedPassword,
+                    name = name,
+                    email = email,
+                    phoneNumber = phoneNumber,
+                    role = Role.USER
+                )
+            )
+        )
     }
 
 
-    fun toDto(user : User) : UserResponse {
+    fun toDto(user: User): UserResponse {
         return UserResponse(
             loginId = user.loginId,
             name = user.name,
