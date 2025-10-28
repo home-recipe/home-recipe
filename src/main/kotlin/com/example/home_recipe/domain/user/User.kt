@@ -19,6 +19,9 @@ class User(
     @Column(nullable = false, length = 255)
     var password: String,
 
+    @Column(nullable = false, length = 10)
+    var name: String,
+
     @Column(nullable = false, length = 100)
     var email: String,
 
@@ -32,6 +35,7 @@ class User(
     constructor(
         loginId: String,
         password: String,
+        name: String,
         email: String,
         phoneNumber: String,
         role: Role = Role.USER
@@ -40,6 +44,7 @@ class User(
         refrigeratorId = null,
         loginId = loginId,
         password = password,
+        name = name,
         email = email,
         phoneNumber = phoneNumber,
         role = role
