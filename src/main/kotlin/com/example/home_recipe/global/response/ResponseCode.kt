@@ -9,6 +9,11 @@ enum class ResponseCode(val code: String, val message: String) {
     SIGNUP_ERROR_004("SIGNUP_ERROR_004", "이메일 형식 오류"),
     SIGNUP_ERROR_005("SIGNUP_ERROR_005", "중복된 이메일"),
     SIGNUP_ERROR_006("SIGNUP_ERROR_006", "약관 동의 누락"),
+    SIGNUP_ERROR_007("SIGNUP_ERROR_007", "중복된 로그인ID로 회원가입 시도"),
+    SIGNUP_ERROR_008("SIGNUP_ERROR_008", "중복된 휴대폰번호로 회원가입 시도"),
+    SIGNUP_ERROR_009("SIGNUP_ERROR_009", "로그인ID가 정책을 만족하지 않음"),
+    SIGNUP_ERROR_010("SIGNUP_ERROR_010", "휴대폰번호 형식이 올바르지 않음"),
+    SIGNUP_ERROR_011("SIGNUP_ERROR_011", "유효성 검사 오류"),
 
     LOGIN_SUCCESS("LOGIN_SUCCESS", "로그인 성공"),
     LOGIN_ERROR_001("LOGIN_ERROR_001", "필수 필드 누락"),
