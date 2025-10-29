@@ -51,7 +51,7 @@ class JoinRequestTest {
 
         //then
         Assertions.assertThat(violations).isNotEmpty
-        Assertions.assertThat(message).isEqualTo(ResponseCode.SIGNUP_ERROR_001.name)
+        Assertions.assertThat(message).isEqualTo(ResponseCode.SIGNUP_ERROR_002.name)
     }
 
     @ParameterizedTest
