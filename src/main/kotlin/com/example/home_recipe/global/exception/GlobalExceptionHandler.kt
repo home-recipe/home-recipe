@@ -15,7 +15,7 @@ class GlobalExceptionHandler {
     fun handleBusinessException(ex: BusinessException): ResponseEntity<ApiResponse<Unit>> {
         return ApiResponse.error(
             responseCode = ex.responseCode,
-            status = HttpStatus.BAD_REQUEST
+            status = ex.status
         )
     }
 
