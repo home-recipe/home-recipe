@@ -21,6 +21,7 @@ enum class ResponseCode(val code: String, val message: String) {
     LOGIN_ERROR_003("LOGIN_ERROR_003", "비밀번호 불일치"),
 
     AUTH_SUCCESS("AUTH_SUCCESS", "토큰 검증 성공"),
+    AUTH_RENEWAL_SUCCESS("AUTH_RENEWAL_SUCCESS", "토큰 갱신 성공"),
     AUTH_ERROR_001("AUTH_ERROR_001", "Access Token 누락"),
     AUTH_ERROR_002("AUTH_ERROR_002", "Access Token 만료"),
     AUTH_ERROR_003("AUTH_ERROR_003", "Access Token 위조"),
