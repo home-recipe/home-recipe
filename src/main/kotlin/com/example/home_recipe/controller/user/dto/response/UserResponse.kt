@@ -1,6 +1,6 @@
 package com.example.home_recipe.controller.user.dto.response
 
-data class UserResponse(
+data class JoinResponse(
     val name: String,
     val loginId: String,
     val email: String,
