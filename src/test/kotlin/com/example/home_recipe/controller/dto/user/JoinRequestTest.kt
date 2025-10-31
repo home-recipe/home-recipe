@@ -1,35 +1,47 @@
-package com.example.home_recipe.controller.user.dto
+package com.example.home_recipe.controller.dto.user
 
 import com.example.home_recipe.controller.dto.user.dto.JoinRequest
+import com.example.home_recipe.controller.dto.user.dto.JoinResponse
+import com.example.home_recipe.domain.user.Role
 import com.example.home_recipe.global.response.code.UserCode
 import jakarta.validation.Validation
-import org.assertj.core.api.Assertions
+import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.DisplayName
-import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.ValueSource
+import kotlin.test.Test
 
 class JoinRequestTest {
+
+    fun getJoinReqeust(): JoinRequest {
+        return JoinRequest(
+            name = "user",
+            password = "password123",
+            email = "user123@naver.com",
+        )
+    }
+
+    fun getJoinResponse(request: JoinRequest): JoinResponse {
+        return JoinResponse(
+            name = request.name,
+            email = request.email,
+            role = Role.USER.name
+        )
+    }
 
     //////성공 테스트
     @Test
     @DisplayName("JoinRequest DTO 생성 성공 테스트")
     fun JoinRequest_DTO_생성_성공_테스트() {
         //given
-        val request = JoinRequest(
-            name = "userName",
-            loginId = "test123",
-            password = "password123",
-            email = "test@example.com",
-            phoneNumber = "01012345678"
-        )
+        val request = getJoinReqeust()
 
         //when
         val validator = Validation.buildDefaultValidatorFactory().validator
         val violations = validator.validate(request)
 
         //then
-        Assertions.assertThat(violations).isEmpty()
+        assertThat(violations).isEmpty()
     }
 
     ///////예외 테스트
@@ -39,10 +51,8 @@ class JoinRequestTest {
         //given
         val request = JoinRequest(
             name = "",
-            loginId = "test123",
             password = "password123",
-            email = "test@example.com",
-            phoneNumber = "01012345678"
+            email = "user123@naver.com",
         )
 
         //when
@@ -51,8 +61,8 @@ class JoinRequestTest {
         val message = violations.first().message
 
         //then
-        Assertions.assertThat(violations).isNotEmpty
-        Assertions.assertThat(message).isEqualTo(UserCode.SIGNUP_ERROR_002.name)
+        assertThat(violations).isNotEmpty
+        assertThat(message).isEqualTo(UserCode.SIGNUP_ERROR_002.name)
     }
 
     @ParameterizedTest
@@ -62,10 +72,8 @@ class JoinRequestTest {
         //given
         val request = JoinRequest(
             name = name,
-            loginId = "test123",
             password = "password123",
             email = "test@example.com",
-            phoneNumber = "01012345678"
         )
 
         //when
@@ -74,31 +82,8 @@ class JoinRequestTest {
         val message = violations.first().message
 
         //then
-        Assertions.assertThat(violations).isNotEmpty
-        Assertions.assertThat(message).isEqualTo(UserCode.SIGNUP_ERROR_002.name)
-    }
-
-    @ParameterizedTest
-    @DisplayName("아이디가 형식을 만족하지 않을 경우 검증 실패")
-    @ValueSource(strings = ["tes1", "notExistNums", "010101"])
-    fun 아이디가_형식을_만족하지_않을_경우_검증_실패(loginId: String) {
-        //given
-        val request = JoinRequest(
-            name = "name",
-            loginId = loginId,
-            password = "password123",
-            email = "test@example.com",
-            phoneNumber = "01012345678"
-        )
-
-        //when
-        val validator = Validation.buildDefaultValidatorFactory().validator
-        val violations = validator.validate(request)
-        val message = violations.first().message
-
-        //then
-        Assertions.assertThat(violations).isNotEmpty
-        Assertions.assertThat(message).isEqualTo(UserCode.SIGNUP_ERROR_009.name)
+        assertThat(violations).isNotEmpty
+        assertThat(message).isEqualTo(UserCode.SIGNUP_ERROR_002.name)
     }
 
     @ParameterizedTest
@@ -108,10 +93,8 @@ class JoinRequestTest {
         //given
         val request = JoinRequest(
             name = "name",
-            loginId = "test123",
             password = password,
             email = "test@example.com",
-            phoneNumber = "01012345678"
         )
 
         //when
@@ -120,8 +103,8 @@ class JoinRequestTest {
         val message = violations.first().message
 
         //then
-        Assertions.assertThat(violations).isNotEmpty
-        Assertions.assertThat(message).isEqualTo(UserCode.SIGNUP_ERROR_003.name)
+        assertThat(violations).isNotEmpty
+        assertThat(message).isEqualTo(UserCode.SIGNUP_ERROR_003.name)
     }
 
     @ParameterizedTest
@@ -131,10 +114,8 @@ class JoinRequestTest {
         //given
         val request = JoinRequest(
             name = "name",
-            loginId = "test123",
             password = "password",
             email = email,
-            phoneNumber = "01012345678"
         )
 
         //when
@@ -143,30 +124,7 @@ class JoinRequestTest {
         val message = violations.first().message
 
         //then
-        Assertions.assertThat(violations).isNotEmpty
-        Assertions.assertThat(message).isEqualTo(UserCode.SIGNUP_ERROR_004.name)
-    }
-
-    @ParameterizedTest
-    @DisplayName("휴대폰번호가 형식을 만족하지 않을 경우 검증 실패")
-    @ValueSource(strings = ["12341111", "0112345677", "0112345"])
-    fun 휴대폰번호가_형식을_만족하지_않을_경우_검증_실패(phoneNumber: String) {
-        //given
-        val request = JoinRequest(
-            name = "name",
-            loginId = "test123",
-            password = "password",
-            email = "username@naver.com",
-            phoneNumber = phoneNumber
-        )
-
-        //when
-        val validator = Validation.buildDefaultValidatorFactory().validator
-        val violations = validator.validate(request)
-        val message = violations.first().message
-
-        //then
-        Assertions.assertThat(violations).isNotEmpty
-        Assertions.assertThat(message).isEqualTo(UserCode.SIGNUP_ERROR_010.name)
+        assertThat(violations).isNotEmpty
+        assertThat(message).isEqualTo(UserCode.SIGNUP_ERROR_004.name)
     }
 }

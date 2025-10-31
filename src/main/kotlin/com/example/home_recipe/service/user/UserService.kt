@@ -19,30 +19,20 @@ class UserService(
 ) {
 
     fun join(request: JoinRequest): JoinResponse {
-        val loginId = request.loginId
         val email = request.email
-        val phoneNumber = request.phoneNumber
         val encryptedPassword = passwordEncoder.encode(request.password)
         val name = request.name
 
-        if (userRepository.existsByLoginId(loginId)) {
-            throw BusinessException(UserCode.SIGNUP_ERROR_007, HttpStatus.BAD_REQUEST)
-        }
         if (userRepository.existsByEmail(email)) {
             throw BusinessException(UserCode.SIGNUP_ERROR_005, HttpStatus.BAD_REQUEST)
-        }
-        if (userRepository.existsByPhoneNumber(phoneNumber)) {
-            throw BusinessException(UserCode.SIGNUP_ERROR_008, HttpStatus.BAD_REQUEST)
         }
 
         return toJoinResponse(
             userRepository.save(
                 User(
-                    loginId = loginId,
                     password = encryptedPassword,
                     name = name,
                     email = email,
-                    phoneNumber = phoneNumber,
                     role = Role.USER
                 )
             )
