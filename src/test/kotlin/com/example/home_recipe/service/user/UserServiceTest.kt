@@ -4,7 +4,7 @@ import com.example.home_recipe.controller.user.dto.JoinRequest
 import com.example.home_recipe.domain.user.Role
 import com.example.home_recipe.domain.user.User
 import com.example.home_recipe.global.exception.BusinessException
-import com.example.home_recipe.global.response.ResponseCode
+import com.example.home_recipe.global.response.code.UserCode
 import com.example.home_recipe.repository.UserRepository
 import org.assertj.core.api.Assertions
 import org.assertj.core.api.Assertions.assertThatThrownBy
@@ -19,7 +19,7 @@ import org.mockito.kotlin.whenever
 import org.springframework.security.crypto.password.PasswordEncoder
 
 @ExtendWith(MockitoExtension::class)
-class UserServiceTest {
+class UserCodeServiceTest {
 
     @Mock
     private lateinit var userRepository: UserRepository
@@ -86,7 +86,7 @@ class UserServiceTest {
             userService.join(request)
         }
             .isInstanceOf(BusinessException::class.java)
-            .hasMessageContaining(ResponseCode.SIGNUP_ERROR_007.message)
+            .hasMessageContaining(UserCode.SIGNUP_ERROR_007.message)
     }
 
     @Test
@@ -110,7 +110,7 @@ class UserServiceTest {
             userService.join(request)
         }
             .isInstanceOf(BusinessException::class.java)
-            .hasMessageContaining(ResponseCode.SIGNUP_ERROR_005.message)
+            .hasMessageContaining(UserCode.SIGNUP_ERROR_005.message)
     }
 
     @Test
@@ -135,6 +135,6 @@ class UserServiceTest {
             userService.join(request)
         }
             .isInstanceOf(BusinessException::class.java)
-            .hasMessageContaining(ResponseCode.SIGNUP_ERROR_008.message)
+            .hasMessageContaining(UserCode.SIGNUP_ERROR_008.message)
     }
 }
