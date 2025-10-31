@@ -1,6 +1,6 @@
 package com.example.home_recipe.global.security
 
-import com.example.home_recipe.global.response.ResponseCode
+import com.example.home_recipe.global.response.code.UserCode
 import com.example.home_recipe.global.sercurity.JwtProvider
 import org.assertj.core.api.Assertions
 import org.assertj.core.api.Assertions.assertThat
@@ -43,7 +43,7 @@ class JwtProviderTest {
         val parsedEmail = jwtProvider.getEmailFromToken(token)
         val result = jwtProvider.validateAccessToken(token)
         assertThat(parsedEmail).isEqualTo(email)
-        assertThat(result).isEqualTo(ResponseCode.AUTH_SUCCESS)
+        assertThat(result).isEqualTo(UserCode.AUTH_SUCCESS)
     }
 
     //////예외 테스트
@@ -74,7 +74,7 @@ class JwtProviderTest {
         val result = legitProvider.validateAccessToken(counterfeitToken)
 
         // then
-        assertThat(result).isEqualTo(ResponseCode.AUTH_ERROR_003)
+        assertThat(result).isEqualTo(UserCode.AUTH_ERROR_003)
     }
 
     @Test
@@ -100,6 +100,6 @@ class JwtProviderTest {
         val result = shortLivedProvider.validateAccessToken(expiredToken)
 
         // then
-        assertThat(result).isEqualTo(ResponseCode.AUTH_ERROR_002)
+        assertThat(result).isEqualTo(UserCode.AUTH_ERROR_002)
     }
 }

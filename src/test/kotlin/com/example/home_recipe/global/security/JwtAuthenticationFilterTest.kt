@@ -1,7 +1,7 @@
 package com.example.home_recipe.global.security
 
 import com.example.home_recipe.global.exception.BusinessException
-import com.example.home_recipe.global.response.ResponseCode
+import com.example.home_recipe.global.response.code.UserCode
 import com.example.home_recipe.global.sercurity.JwtAuthenticationFilter
 import com.example.home_recipe.global.sercurity.JwtProvider
 import org.assertj.core.api.Assertions.assertThat
@@ -40,7 +40,7 @@ class JwtAuthenticationFilterTest {
         val filterChain = MockFilterChain()
         request.addHeader("Authorization", "Bearer $token")
 
-        whenever(jwtProvider.validateAccessToken(any())).thenReturn(ResponseCode.AUTH_SUCCESS)
+        whenever(jwtProvider.validateAccessToken(any())).thenReturn(UserCode.AUTH_SUCCESS)
         whenever(jwtProvider.getEmailFromToken(any())).thenReturn("user123@naver.com")
 
         //when
@@ -64,7 +64,7 @@ class JwtAuthenticationFilterTest {
         request.addHeader("Authorization", "Bearer $token")
 
         whenever(jwtProvider.validateAccessToken(any()))
-            .thenThrow(BusinessException(ResponseCode.AUTH_ERROR_002, HttpStatus.UNAUTHORIZED))
+            .thenThrow(BusinessException(UserCode.AUTH_ERROR_002, HttpStatus.UNAUTHORIZED))
 
         //when
         val exception = assertThrows<BusinessException> {
@@ -72,7 +72,7 @@ class JwtAuthenticationFilterTest {
         }
 
         //then
-        assertThat(exception.responseCode).isEqualTo(ResponseCode.AUTH_ERROR_002)
+        assertThat(exception.baseCode).isEqualTo(UserCode.AUTH_ERROR_002)
         assertThat(exception.status).isEqualTo(HttpStatus.UNAUTHORIZED)
     }
 
@@ -87,7 +87,7 @@ class JwtAuthenticationFilterTest {
         request.addHeader("Authorization", "Bearer $token")
 
         whenever(jwtProvider.validateAccessToken(any()))
-            .thenThrow(BusinessException(ResponseCode.AUTH_ERROR_003, HttpStatus.UNAUTHORIZED))
+            .thenThrow(BusinessException(UserCode.AUTH_ERROR_003, HttpStatus.UNAUTHORIZED))
 
         //when
         val exception = assertThrows<BusinessException> {
@@ -95,7 +95,7 @@ class JwtAuthenticationFilterTest {
         }
 
         //then
-        assertThat(exception.responseCode).isEqualTo(ResponseCode.AUTH_ERROR_003)
+        assertThat(exception.baseCode).isEqualTo(UserCode.AUTH_ERROR_003)
         assertThat(exception.status).isEqualTo(HttpStatus.UNAUTHORIZED)
     }
 }
