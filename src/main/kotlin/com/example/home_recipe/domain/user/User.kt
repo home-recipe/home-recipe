@@ -13,8 +13,8 @@ class User(
     @Column(nullable = false)
     var refrigeratorId: Long? = null,
 
-    @Column(nullable = false, length = 20, unique = true)
-    var loginId: String,
+    @Column(nullable = false, length = 100)
+    var email: String,
 
     @Column(nullable = false, length = 255)
     var password: String,
@@ -22,31 +22,21 @@ class User(
     @Column(nullable = false, length = 10)
     var name: String,
 
-    @Column(nullable = false, length = 100)
-    var email: String,
-
-    @Column(nullable = false, length = 11, unique = true)
-    var phoneNumber: String,
-
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 10)
     var role: Role = Role.USER
 ) {
     constructor(
-        loginId: String,
         password: String,
         name: String,
         email: String,
-        phoneNumber: String,
         role: Role = Role.USER
     ) : this(
         id = null,
         refrigeratorId = null,
-        loginId = loginId,
         password = password,
         name = name,
         email = email,
-        phoneNumber = phoneNumber,
         role = role
     )
 

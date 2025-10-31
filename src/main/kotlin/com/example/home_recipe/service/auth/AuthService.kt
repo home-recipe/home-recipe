@@ -21,7 +21,7 @@ class AuthService(
     private val passwordEncoder: PasswordEncoder
 ) {
     fun login(request: LoginRequest): TokenDto {
-        val user = userRepository.findByLoginId(request.loginId)
+        val user = userRepository.findByEmail(request.email)
             .orElseThrow { BusinessException(UserCode.LOGIN_ERROR_002, HttpStatus.UNAUTHORIZED) }
 
         if (!checkPassword(request.password, user.password)) {

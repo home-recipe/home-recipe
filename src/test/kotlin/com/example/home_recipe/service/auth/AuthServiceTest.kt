@@ -41,15 +41,13 @@ class AuthServiceTest {
     fun 로그인_성공_테스트() {
         //given
         val request = LoginRequest(
-            loginId = "user123",
+            email = "user123@naver.com",
             password = "password123"
         )
         val user = User(
             name = "user",
-            loginId = "user123",
             password = "password123",
             email = "user123@naver.com",
-            phoneNumber = "01011112222",
             role = Role.USER
         )
         val accessToken = "accessToken"
@@ -62,7 +60,7 @@ class AuthServiceTest {
             token = refreshToken,
             expiresAt = expiresAt
         )
-        whenever(userRepository.findByLoginId(any())).thenReturn(Optional.of(user))
+        whenever(userRepository.findByEmail(any())).thenReturn(Optional.of(user))
         whenever(passwordEncoder.matches(any(), any())).thenReturn(true)
         whenever(jwtProvider.generateAccessToken(any())).thenReturn(accessToken)
         whenever(jwtProvider.generateRefreshToken(any())).thenReturn(refreshToken)

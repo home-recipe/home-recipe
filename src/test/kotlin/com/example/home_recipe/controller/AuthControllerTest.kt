@@ -1,4 +1,4 @@
-package com.example.home_recipe.controller.auth
+package com.example.home_recipe.controller
 
 import com.example.home_recipe.controller.dto.auth.dto.TokenDto
 import com.example.home_recipe.controller.dto.auth.AuthController
@@ -6,7 +6,7 @@ import com.example.home_recipe.global.sercurity.JwtProvider
 import com.example.home_recipe.repository.RefreshTokenRepository
 import com.example.home_recipe.repository.UserRepository
 import com.example.home_recipe.service.auth.AuthService
-import com.example.home_recipe.service.auth.AuthServiceTest
+
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.registerKotlinModule
 import org.junit.jupiter.api.DisplayName
