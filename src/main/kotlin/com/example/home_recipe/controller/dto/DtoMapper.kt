@@ -8,10 +8,8 @@ class DtoMapper {
     companion object {
         fun toJoinResponse(user: User): JoinResponse {
             return JoinResponse(
-                loginId = user.loginId,
                 name = user.name,
                 email = user.email,
-                phoneNumber = user.phoneNumber,
                 role = user.role.name
             )
         }
