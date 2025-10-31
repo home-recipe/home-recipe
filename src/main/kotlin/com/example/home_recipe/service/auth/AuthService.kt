@@ -1,14 +1,13 @@
 package com.example.home_recipe.service.auth
 
-import com.example.home_recipe.controller.auth.dto.TokenDto
-import com.example.home_recipe.controller.user.dto.LoginRequest
+import com.example.home_recipe.controller.dto.auth.dto.TokenDto
+import com.example.home_recipe.controller.dto.user.dto.LoginRequest
 import com.example.home_recipe.domain.auth.RefreshToken
 import com.example.home_recipe.global.sercurity.JwtProvider
 import com.example.home_recipe.global.exception.BusinessException
-import com.example.home_recipe.global.response.ResponseCode
+import com.example.home_recipe.global.response.code.UserCode
 import com.example.home_recipe.repository.RefreshTokenRepository
 import com.example.home_recipe.repository.UserRepository
-import org.jetbrains.annotations.TestOnly
 import org.springframework.http.HttpStatus
 import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.stereotype.Service
@@ -23,10 +22,10 @@ class AuthService(
 ) {
     fun login(request: LoginRequest): TokenDto {
         val user = userRepository.findByLoginId(request.loginId)
-            .orElseThrow { BusinessException(ResponseCode.LOGIN_ERROR_002, HttpStatus.UNAUTHORIZED) }
+            .orElseThrow { BusinessException(UserCode.LOGIN_ERROR_002, HttpStatus.UNAUTHORIZED) }
 
         if (!checkPassword(request.password, user.password)) {
-            throw BusinessException(ResponseCode.LOGIN_ERROR_003, HttpStatus.UNAUTHORIZED)
+            throw BusinessException(UserCode.LOGIN_ERROR_003, HttpStatus.UNAUTHORIZED)
         }
 
         val accessToken = jwtProvider.generateAccessToken(user.email)
@@ -55,16 +54,16 @@ class AuthService(
         val refreshToken = request.refreshToken
 
         val responseCode = jwtProvider.validateRefreshToken(refreshToken)
-        if (responseCode != ResponseCode.AUTH_SUCCESS)
+        if (responseCode != UserCode.AUTH_SUCCESS)
             throw BusinessException(responseCode, HttpStatus.UNAUTHORIZED)
 
         val email = jwtProvider.getEmailFromToken(refreshToken)
 
-        val savedToken = refreshTokenRepository.findById(email)
-            .orElseThrow { BusinessException(ResponseCode.AUTH_ERROR_006, HttpStatus.UNAUTHORIZED) }
+        val savedToken = refreshTokenRepository.findByEmail(email)
+            .orElseThrow { BusinessException(UserCode.AUTH_ERROR_006, HttpStatus.UNAUTHORIZED) }
 
         if (savedToken.token != refreshToken)
-            throw BusinessException(ResponseCode.AUTH_ERROR_006, HttpStatus.UNAUTHORIZED)
+            throw BusinessException(UserCode.AUTH_ERROR_006, HttpStatus.UNAUTHORIZED)
 
         val newAccessToken = jwtProvider.generateAccessToken(email)
         val newRefreshToken = jwtProvider.generateRefreshToken(email)

@@ -1,6 +1,6 @@
 package com.example.home_recipe.global.exception
 
-import com.example.home_recipe.global.response.ResponseCode
+import com.example.home_recipe.global.response.code.UserCode
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.DisplayName
 import org.springframework.http.HttpStatus
@@ -15,7 +15,7 @@ class GlobalExceptionHandlerTest {
     fun handleBusinessException_테스트() {
         // given
         val exception = BusinessException(
-            responseCode = ResponseCode.AUTH_ERROR_001,
+            baseCode = UserCode.AUTH_ERROR_001,
             status = HttpStatus.UNAUTHORIZED
         )
 
@@ -24,7 +24,7 @@ class GlobalExceptionHandlerTest {
 
         // then
         assertThat(response.statusCode).isEqualTo(HttpStatus.UNAUTHORIZED)
-        assertThat(response.body!!.response.code).isEqualTo(ResponseCode.AUTH_ERROR_001.code)
-        assertThat(response.body!!.message).isEqualTo(ResponseCode.AUTH_ERROR_001.message)
+        assertThat(response.body!!.response.code).isEqualTo(UserCode.AUTH_ERROR_001.code)
+        assertThat(response.body!!.message).isEqualTo(UserCode.AUTH_ERROR_001.message)
     }
 }

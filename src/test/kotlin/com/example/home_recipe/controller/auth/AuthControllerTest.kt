@@ -1,6 +1,7 @@
 package com.example.home_recipe.controller.auth
 
-import com.example.home_recipe.controller.auth.dto.TokenDto
+import com.example.home_recipe.controller.dto.auth.dto.TokenDto
+import com.example.home_recipe.controller.dto.auth.AuthController
 import com.example.home_recipe.global.sercurity.JwtProvider
 import com.example.home_recipe.repository.RefreshTokenRepository
 import com.example.home_recipe.repository.UserRepository

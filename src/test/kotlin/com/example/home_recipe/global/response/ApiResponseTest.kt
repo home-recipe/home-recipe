@@ -1,5 +1,6 @@
 package com.example.home_recipe.global.response
 
+import com.example.home_recipe.global.response.code.UserCode
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
@@ -13,7 +14,7 @@ class ApiResponseTest {
     fun success_응답_테스트() {
         //given
         val data = "data"
-        val responseCode = ResponseCode.AUTH_SUCCESS
+        val responseCode = UserCode.AUTH_SUCCESS
 
         //when
         val response: ResponseEntity<ApiResponse<String>> =
@@ -31,10 +32,10 @@ class ApiResponseTest {
     @DisplayName("error()가 올바른 ApiResponse를 반환한다")
     fun error_응답_테스트() {
         // given
-        val responseCode = ResponseCode.AUTH_ERROR_001
+        val responseCode = UserCode.AUTH_ERROR_001
 
         // when
-        val response: ResponseEntity<ApiResponse<String>> =
+        val response: ResponseEntity<ApiResponse<Unit>> =
             ApiResponse.error(responseCode, HttpStatus.UNAUTHORIZED)
 
         // then
