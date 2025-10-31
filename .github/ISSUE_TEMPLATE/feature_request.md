@@ -2,7 +2,7 @@
 name: Feature request
 about: 기능 구현
 title: "[FEATURE]"
-labels: enhancement
+labels: "\U0001F579️ feature"
 assignees: ''
 
 ---
