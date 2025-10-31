@@ -1,4 +1,4 @@
-package com.example.home_recipe.controller.user.dto
+package com.example.home_recipe.controller.dto.user.dto
 
 import jakarta.validation.constraints.Pattern
 import jakarta.validation.constraints.Size

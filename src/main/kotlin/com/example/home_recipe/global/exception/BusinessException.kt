@@ -1,10 +1,10 @@
 package com.example.home_recipe.global.exception
 
-import com.example.home_recipe.global.response.ResponseCode
+import com.example.home_recipe.global.response.code.BaseCode
 import org.springframework.http.HttpStatus
 
 class BusinessException(
-    val responseCode: ResponseCode,
+    val baseCode: BaseCode,
     val status: HttpStatus,
-    message: String = responseCode.message
+    message: String = baseCode.message
 ) : RuntimeException(message)

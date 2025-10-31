@@ -1,6 +1,7 @@
 package com.example.home_recipe.controller.user.dto
 
-import com.example.home_recipe.global.response.ResponseCode
+import com.example.home_recipe.controller.dto.user.dto.JoinRequest
+import com.example.home_recipe.global.response.code.UserCode
 import jakarta.validation.Validation
 import org.assertj.core.api.Assertions
 import org.junit.jupiter.api.DisplayName
@@ -51,7 +52,7 @@ class JoinRequestTest {
 
         //then
         Assertions.assertThat(violations).isNotEmpty
-        Assertions.assertThat(message).isEqualTo(ResponseCode.SIGNUP_ERROR_002.name)
+        Assertions.assertThat(message).isEqualTo(UserCode.SIGNUP_ERROR_002.name)
     }
 
     @ParameterizedTest
@@ -74,7 +75,7 @@ class JoinRequestTest {
 
         //then
         Assertions.assertThat(violations).isNotEmpty
-        Assertions.assertThat(message).isEqualTo(ResponseCode.SIGNUP_ERROR_002.name)
+        Assertions.assertThat(message).isEqualTo(UserCode.SIGNUP_ERROR_002.name)
     }
 
     @ParameterizedTest
@@ -97,7 +98,7 @@ class JoinRequestTest {
 
         //then
         Assertions.assertThat(violations).isNotEmpty
-        Assertions.assertThat(message).isEqualTo(ResponseCode.SIGNUP_ERROR_009.name)
+        Assertions.assertThat(message).isEqualTo(UserCode.SIGNUP_ERROR_009.name)
     }
 
     @ParameterizedTest
@@ -120,7 +121,7 @@ class JoinRequestTest {
 
         //then
         Assertions.assertThat(violations).isNotEmpty
-        Assertions.assertThat(message).isEqualTo(ResponseCode.SIGNUP_ERROR_003.name)
+        Assertions.assertThat(message).isEqualTo(UserCode.SIGNUP_ERROR_003.name)
     }
 
     @ParameterizedTest
@@ -143,7 +144,7 @@ class JoinRequestTest {
 
         //then
         Assertions.assertThat(violations).isNotEmpty
-        Assertions.assertThat(message).isEqualTo(ResponseCode.SIGNUP_ERROR_004.name)
+        Assertions.assertThat(message).isEqualTo(UserCode.SIGNUP_ERROR_004.name)
     }
 
     @ParameterizedTest
@@ -166,6 +167,6 @@ class JoinRequestTest {
 
         //then
         Assertions.assertThat(violations).isNotEmpty
-        Assertions.assertThat(message).isEqualTo(ResponseCode.SIGNUP_ERROR_010.name)
+        Assertions.assertThat(message).isEqualTo(UserCode.SIGNUP_ERROR_010.name)
     }
 }

@@ -1,6 +1,6 @@
 package com.example.home_recipe.service.user
 
-import com.example.home_recipe.controller.user.dto.JoinRequest
+import com.example.home_recipe.controller.dto.user.dto.JoinRequest
 import com.example.home_recipe.domain.user.Role
 import com.example.home_recipe.domain.user.User
 import com.example.home_recipe.global.exception.BusinessException
@@ -19,7 +19,7 @@ import org.mockito.kotlin.whenever
 import org.springframework.security.crypto.password.PasswordEncoder
 
 @ExtendWith(MockitoExtension::class)
-class UserCodeServiceTest {
+class UserServiceTest {
 
     @Mock
     private lateinit var userRepository: UserRepository
@@ -55,7 +55,7 @@ class UserCodeServiceTest {
         whenever(userRepository.existsByEmail(any())).thenReturn(false)
         whenever(userRepository.existsByLoginId(any())).thenReturn(false)
         whenever(userRepository.existsByPhoneNumber(any())).thenReturn(false)
-        whenever(userRepository.save(any())).thenReturn(savedUser)
+        whenever(userRepository.save(any<User>())).thenReturn(savedUser)
 
         //when
         val response = userService.join(request)

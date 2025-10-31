@@ -1,11 +1,11 @@
 package com.example.home_recipe.service.auth
 
-import com.example.home_recipe.controller.auth.dto.TokenDto
-import com.example.home_recipe.controller.user.dto.LoginRequest
+import com.example.home_recipe.controller.dto.auth.dto.TokenDto
+import com.example.home_recipe.controller.dto.user.dto.LoginRequest
 import com.example.home_recipe.domain.auth.RefreshToken
 import com.example.home_recipe.domain.user.Role
 import com.example.home_recipe.domain.user.User
-import com.example.home_recipe.global.response.ResponseCode
+import com.example.home_recipe.global.response.code.UserCode
 import com.example.home_recipe.global.sercurity.JwtProvider
 import com.example.home_recipe.repository.RefreshTokenRepository
 import com.example.home_recipe.repository.UserRepository
@@ -67,7 +67,9 @@ class AuthServiceTest {
         whenever(jwtProvider.generateAccessToken(any())).thenReturn(accessToken)
         whenever(jwtProvider.generateRefreshToken(any())).thenReturn(refreshToken)
         whenever(jwtProvider.getRefreshExpiration()).thenReturn(3600_000L)
-        whenever(refreshTokenRepository.save(any())).thenReturn(refreshEntity)
+        whenever(refreshTokenRepository.save(any<RefreshToken>()))
+            .thenReturn(refreshEntity)
+
 
         //when
         val tokenDto = authService.login(request)
@@ -95,10 +97,10 @@ class AuthServiceTest {
         val newEntity = RefreshToken(email, newRefreshToken, expiresAt)
 
         whenever(jwtProvider.validateRefreshToken(oldRefreshToken))
-            .thenReturn(ResponseCode.AUTH_SUCCESS)
+            .thenReturn(UserCode.AUTH_SUCCESS)
         whenever(jwtProvider.getEmailFromToken(oldRefreshToken))
             .thenReturn(email)
-        whenever(refreshTokenRepository.findById(email))
+        whenever(refreshTokenRepository.findByEmail(email))
             .thenReturn(Optional.of(savedEntity))
         whenever(jwtProvider.generateAccessToken(email))
             .thenReturn(newAccessToken)
@@ -106,8 +108,9 @@ class AuthServiceTest {
             .thenReturn(newRefreshToken)
         whenever(jwtProvider.getRefreshExpiration())
             .thenReturn(3600_000L)
-        whenever(refreshTokenRepository.save(any()))
+        whenever(refreshTokenRepository.save(any<RefreshToken>()))
             .thenReturn(newEntity)
+
 
         // when
         val result = authService.refreshToken(request)

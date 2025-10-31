@@ -1,7 +1,7 @@
 package com.example.home_recipe.global.sercurity
 
 import com.example.home_recipe.global.exception.BusinessException
-import com.example.home_recipe.global.response.ResponseCode
+import com.example.home_recipe.global.response.code.UserCode
 import jakarta.servlet.FilterChain
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
@@ -27,7 +27,7 @@ class JwtAuthenticationFilter (
             val token = header.substring(7)
             val responseCode = jwtProvider.validateAccessToken(token)
 
-            if(responseCode == ResponseCode.AUTH_SUCCESS) {
+            if(responseCode == UserCode.AUTH_SUCCESS) {
                 val email = jwtProvider.getEmailFromToken(token)
                 val auth = UsernamePasswordAuthenticationToken(email, null, emptyList())
                 SecurityContextHolder.getContext().authentication = auth

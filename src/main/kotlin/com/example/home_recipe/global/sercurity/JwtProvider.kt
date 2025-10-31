@@ -1,6 +1,6 @@
 package com.example.home_recipe.global.sercurity
 
-import com.example.home_recipe.global.response.ResponseCode
+import com.example.home_recipe.global.response.code.UserCode
 import io.jsonwebtoken.ExpiredJwtException
 import io.jsonwebtoken.Jwts
 import io.jsonwebtoken.security.Keys
@@ -17,8 +17,8 @@ class JwtProvider(
 ) {
     fun getRefreshExpiration(): Long = refreshExpiration
 
-    fun validateAccessToken(token: String?): ResponseCode {
-        if (token.isNullOrBlank()) return ResponseCode.AUTH_ERROR_001
+    fun validateAccessToken(token: String?): UserCode {
+        if (token.isNullOrBlank()) return UserCode.AUTH_ERROR_001
 
         return try {
             val key = getSigningKey()
@@ -27,16 +27,16 @@ class JwtProvider(
                 .build()
 
             parser.parseClaimsJws(token)
-            ResponseCode.AUTH_SUCCESS
+            UserCode.AUTH_SUCCESS
         } catch (ex: ExpiredJwtException) {
-            ResponseCode.AUTH_ERROR_002
+            UserCode.AUTH_ERROR_002
         } catch (ex: Exception) {
-            ResponseCode.AUTH_ERROR_003
+            UserCode.AUTH_ERROR_003
         }
     }
 
-    fun validateRefreshToken(token: String?): ResponseCode {
-        if (token.isNullOrBlank()) return ResponseCode.AUTH_ERROR_004
+    fun validateRefreshToken(token: String?): UserCode {
+        if (token.isNullOrBlank()) return UserCode.AUTH_ERROR_004
 
         return try {
             val key = getSigningKey()
@@ -45,11 +45,11 @@ class JwtProvider(
                 .build()
 
             parser.parseClaimsJws(token)
-            ResponseCode.AUTH_SUCCESS
+            UserCode.AUTH_SUCCESS
         } catch (ex: ExpiredJwtException) {
-            ResponseCode.AUTH_ERROR_005
+            UserCode.AUTH_ERROR_005
         } catch (ex: Exception) {
-            ResponseCode.AUTH_ERROR_006
+            UserCode.AUTH_ERROR_006
         }
     }
 

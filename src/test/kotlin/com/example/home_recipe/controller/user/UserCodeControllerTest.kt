@@ -1,12 +1,13 @@
 package com.example.home_recipe.controller.user
 
-import com.example.home_recipe.controller.auth.dto.TokenDto
-import com.example.home_recipe.controller.user.dto.JoinRequest
-import com.example.home_recipe.controller.user.dto.JoinResponse
-import com.example.home_recipe.controller.user.dto.LoginRequest
+import com.example.home_recipe.controller.dto.auth.dto.TokenDto
+import com.example.home_recipe.controller.dto.user.UserController
+import com.example.home_recipe.controller.dto.user.dto.JoinRequest
+import com.example.home_recipe.controller.dto.user.dto.JoinResponse
+import com.example.home_recipe.controller.dto.user.dto.LoginRequest
 import com.example.home_recipe.domain.user.Role
 import com.example.home_recipe.global.exception.BusinessException
-import com.example.home_recipe.global.response.ResponseCode
+import com.example.home_recipe.global.response.code.UserCode
 import com.example.home_recipe.global.sercurity.JwtProvider
 import com.example.home_recipe.service.auth.AuthService
 import com.example.home_recipe.service.auth.AuthServiceTest
@@ -33,7 +34,7 @@ import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 @WebMvcTest(UserController::class)
 @ExtendWith(MockitoExtension::class)
 @AutoConfigureMockMvc(addFilters = false)
-class UserControllerTest {
+class UserCodeControllerTest {
 
     @Autowired
     private lateinit var mockMvc: MockMvc
@@ -331,7 +332,7 @@ class UserControllerTest {
         )
 
         whenever(authService.login(request))
-            .thenThrow(BusinessException(ResponseCode.LOGIN_ERROR_002, HttpStatus.BAD_REQUEST))
+            .thenThrow(BusinessException(UserCode.LOGIN_ERROR_002, HttpStatus.BAD_REQUEST))
 
         //when & then
         mockMvc.perform(
