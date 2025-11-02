@@ -5,11 +5,11 @@ import com.example.home_recipe.domain.ingredient.Ingredient
 
 @Entity
 @Table(name = "refrigerator")
-open class Refrigerator protected constructor() {
+class Refrigerator protected constructor() {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    var id: Long? = null
+    val id: Long? = null
 
     @Column(name = "user_id", nullable = false, unique = true)
     var userId: Long = 0L
