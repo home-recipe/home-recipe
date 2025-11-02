@@ -11,9 +11,6 @@ class Refrigerator protected constructor() {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     val id: Long? = null
 
-    @Column(name = "user_id", nullable = false, unique = true)
-    var userId: Long = 0L
-
     @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(
         name = "fridges_ingredients",
@@ -25,6 +22,10 @@ class Refrigerator protected constructor() {
         )]
     )
     val ingredients: MutableSet<Ingredient> = mutableSetOf()
+
+    companion object {
+        fun create(): Refrigerator = Refrigerator()
+    }
 
     fun addIngredient(ingredient: Ingredient): Boolean =
         ingredients.add(ingredient)

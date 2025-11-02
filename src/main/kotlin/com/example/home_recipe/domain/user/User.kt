@@ -1,5 +1,6 @@
 package com.example.home_recipe.domain.user
 
+import com.example.home_recipe.domain.refrigerator.Refrigerator
 import jakarta.persistence.*
 
 @Entity
@@ -9,9 +10,6 @@ class User(
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     val id: Long? = null,
-
-    @Column(nullable = false)
-    var refrigeratorId: Long? = null,
 
     @Column(nullable = false, length = 100)
     var email: String,
@@ -26,6 +24,14 @@ class User(
     @Column(nullable = false, length = 10)
     var role: Role = Role.USER
 ) {
+    @OneToOne(optional = false, fetch = FetchType.LAZY, cascade = [CascadeType.PERSIST])
+    @JoinColumn(name = "refrigerator_id", unique = true)
+    private var refrigerator: Refrigerator? = null
+
+    val refrigeratorExternal: Refrigerator
+        get() = refrigerator
+            ?: error("할당된 냉장고가 없습니다. (userId=$id)")
+
     constructor(
         password: String,
         name: String,
@@ -33,19 +39,18 @@ class User(
         role: Role = Role.USER
     ) : this(
         id = null,
-        refrigeratorId = null,
         password = password,
         name = name,
         email = email,
         role = role
     )
 
-    fun assignRefrigerator(refrigeratorId: Long) {
-        if (this.refrigeratorId != null) {
-            throw IllegalStateException(
-                "이미 refrigeratorId가 할당된 사용자입니다. (userId=$id)"
-            )
+    fun hasRefrigerator(): Boolean = refrigerator != null
+
+    fun assignRefrigerator(refrigerator: Refrigerator) {
+        if (this.refrigerator != null) {
+            error("이미 냉장고가 할당된 사용자입니다. (userId=$id)")
         }
-        this.refrigeratorId = refrigeratorId;
+        this.refrigerator = refrigerator
     }
 }
