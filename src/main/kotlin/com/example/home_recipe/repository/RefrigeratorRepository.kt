@@ -8,5 +8,4 @@ import java.util.*
 
 @Repository
 interface RefrigeratorRepository : JpaRepository<Refrigerator, Long> {
-    fun findByUserId(userId: Long) : Optional<Refrigerator>
 }
