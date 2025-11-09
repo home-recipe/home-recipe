@@ -22,5 +22,8 @@ class DtoMapper {
                 name = ingredient.name
             )
         }
+
+        fun toIngredientResponses(ingredients: Iterable<Ingredient>) =
+            ingredients.map { toIngredientResponse(it) }
     }
 }
