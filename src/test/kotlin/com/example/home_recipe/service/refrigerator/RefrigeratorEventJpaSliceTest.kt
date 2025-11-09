@@ -45,7 +45,8 @@ class RefrigeratorEventJpaSliceTest {
     @Mock
     lateinit var refreshTokenRepository: RefreshTokenRepository
 
-    @Test @DisplayName("UserJoinedEvent 처리로 냉장고 생성 및 할당")
+    @Test
+    @DisplayName("UserJoinedEvent 처리로 냉장고 생성 및 할당")
     fun userJoinedEvent_생성() {
         val user = userRepository.save(User(email = "e@e.com", password = "pw", name = "name"))
         invoker.publishUserJoinedAndCommit(user.id!!, user.email)
