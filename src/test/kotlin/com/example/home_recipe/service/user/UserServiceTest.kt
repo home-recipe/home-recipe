@@ -1,6 +1,6 @@
 package com.example.home_recipe.service.user
 
-import com.example.home_recipe.controller.dto.user.dto.JoinRequest
+import com.example.home_recipe.controller.dto.user.dto.request.JoinRequest
 import com.example.home_recipe.domain.user.Role
 import com.example.home_recipe.domain.user.User
 import com.example.home_recipe.global.exception.BusinessException

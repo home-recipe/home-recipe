@@ -1,8 +1,8 @@
 package com.example.home_recipe.service.user
 
-import com.example.home_recipe.controller.dto.DtoMapper.Companion.toJoinResponse
-import com.example.home_recipe.controller.dto.user.dto.JoinRequest
-import com.example.home_recipe.controller.dto.user.dto.JoinResponse
+import com.example.home_recipe.controller.dto.user.dto.request.JoinRequest
+import com.example.home_recipe.controller.dto.user.dto.response.JoinResponse
+import com.example.home_recipe.controller.dto.user.dto.response.UserResponseAssembler
 import com.example.home_recipe.domain.user.Role
 import com.example.home_recipe.domain.user.User
 import com.example.home_recipe.global.exception.BusinessException
@@ -27,7 +27,7 @@ class UserService(
             throw BusinessException(UserCode.SIGNUP_ERROR_005, HttpStatus.BAD_REQUEST)
         }
 
-        return toJoinResponse(
+        return UserResponseAssembler.toJoinResponse(
             userRepository.save(
                 User(
                     password = encryptedPassword,

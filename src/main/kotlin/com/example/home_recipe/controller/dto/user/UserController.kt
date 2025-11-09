@@ -1,9 +1,9 @@
 package com.example.home_recipe.controller.dto.user
 
 import com.example.home_recipe.controller.dto.auth.dto.TokenDto
-import com.example.home_recipe.controller.dto.user.dto.JoinRequest
-import com.example.home_recipe.controller.dto.user.dto.LoginRequest
-import com.example.home_recipe.controller.dto.user.dto.JoinResponse
+import com.example.home_recipe.controller.dto.user.dto.request.JoinRequest
+import com.example.home_recipe.controller.dto.user.dto.request.LoginRequest
+import com.example.home_recipe.controller.dto.user.dto.response.JoinResponse
 import com.example.home_recipe.global.response.ApiResponse
 import com.example.home_recipe.global.response.code.UserCode
 import com.example.home_recipe.service.auth.AuthService

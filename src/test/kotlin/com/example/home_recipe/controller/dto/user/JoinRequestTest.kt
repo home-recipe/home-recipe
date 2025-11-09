@@ -1,7 +1,7 @@
 package com.example.home_recipe.controller.dto.user
 
-import com.example.home_recipe.controller.dto.user.dto.JoinRequest
-import com.example.home_recipe.controller.dto.user.dto.JoinResponse
+import com.example.home_recipe.controller.dto.user.dto.request.JoinRequest
+import com.example.home_recipe.controller.dto.user.dto.response.JoinResponse
 import com.example.home_recipe.domain.user.Role
 import com.example.home_recipe.global.response.code.UserCode
 import jakarta.validation.Validation

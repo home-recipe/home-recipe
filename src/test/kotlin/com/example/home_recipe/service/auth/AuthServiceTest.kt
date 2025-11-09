@@ -1,7 +1,7 @@
 package com.example.home_recipe.service.auth
 
 import com.example.home_recipe.controller.dto.auth.dto.TokenDto
-import com.example.home_recipe.controller.dto.user.dto.LoginRequest
+import com.example.home_recipe.controller.dto.user.dto.request.LoginRequest
 import com.example.home_recipe.domain.auth.RefreshToken
 import com.example.home_recipe.domain.user.Role
 import com.example.home_recipe.domain.user.User

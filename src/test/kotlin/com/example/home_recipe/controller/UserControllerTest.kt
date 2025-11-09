@@ -2,12 +2,10 @@ package com.example.home_recipe.controller
 
 import com.example.home_recipe.controller.dto.auth.dto.TokenDto
 import com.example.home_recipe.controller.dto.user.UserController
-import com.example.home_recipe.controller.dto.user.dto.JoinRequest
-import com.example.home_recipe.controller.dto.user.dto.JoinResponse
-import com.example.home_recipe.controller.dto.user.dto.LoginRequest
+import com.example.home_recipe.controller.dto.user.dto.request.JoinRequest
+import com.example.home_recipe.controller.dto.user.dto.response.JoinResponse
+import com.example.home_recipe.controller.dto.user.dto.request.LoginRequest
 import com.example.home_recipe.domain.user.Role
-import com.example.home_recipe.global.exception.BusinessException
-import com.example.home_recipe.global.response.code.UserCode
 import com.example.home_recipe.global.sercurity.JwtProvider
 import com.example.home_recipe.service.auth.AuthService
 import com.example.home_recipe.service.user.UserService
@@ -22,7 +20,6 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest
 import org.springframework.boot.test.mock.mockito.MockBean
-import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post
 import org.springframework.test.web.servlet.result.MockMvcResultHandlers.print
