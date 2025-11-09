@@ -21,10 +21,10 @@ class JwtAuthenticationFilter (
         response: HttpServletResponse,
         filterChain: FilterChain
     ) {
-        val header = request.getHeader("Authorization")
+        val header = request.getHeader(AUTHORIZATION_HEADER)
 
-        if (header != null && header.startsWith("Bearer ")) {
-            val token = header.substring(7)
+        if (header != null && header.startsWith(BEARER_PREFIX)) {
+            val token = header.substring(BEARER_PREFIX.length)
             val responseCode = jwtProvider.validateAccessToken(token)
 
             if(responseCode == UserCode.AUTH_SUCCESS) {
@@ -36,5 +36,10 @@ class JwtAuthenticationFilter (
             }
         }
         filterChain.doFilter(request, response)
+    }
+
+    companion object {
+        private const val AUTHORIZATION_HEADER = "Authorization"
+        private const val BEARER_PREFIX = "Bearer "
     }
 }
