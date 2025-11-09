@@ -28,6 +28,17 @@ class IngredientService(
     }
 
     @Transactional
+    fun createAll(requests: List<CreateIngredientRequest>): List<IngredientResponse> {
+        val entities = requests.map { req ->
+            val category = req.category
+                ?: throw BusinessException(IngredientCode.INGREDIENT_ERROR_013, HttpStatus.BAD_REQUEST)
+            Ingredient(category = category, name = req.name)
+        }
+        val saved = ingredientRepository.saveAll(entities)
+        return DtoMapper.toIngredientResponses(saved)
+    }
+
+    @Transactional
     fun update(id: Long, request: UpdateIngredientRequest): IngredientResponse {
         val ingredient = ingredientRepository.findById(id)
             .orElseThrow { BusinessException(IngredientCode.INGREDIENT_ERROR_011, HttpStatus.BAD_REQUEST) }
@@ -37,7 +48,7 @@ class IngredientService(
 
         ingredient.category = category
         ingredient.name = request.name
-        // 더티체킹으로 반영
+
         return DtoMapper.toIngredientResponse(ingredient)
     }
 }
