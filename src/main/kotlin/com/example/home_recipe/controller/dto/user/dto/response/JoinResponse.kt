@@ -1,4 +1,4 @@
-package com.example.home_recipe.controller.dto.user.dto
+package com.example.home_recipe.controller.dto.user.dto.response
 
 data class JoinResponse(
     val name: String,

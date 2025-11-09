@@ -1,7 +1,6 @@
-package com.example.home_recipe.controller.dto.user.dto
+package com.example.home_recipe.controller.dto.user.dto.request
 
 import jakarta.validation.constraints.Email
-import jakarta.validation.constraints.Pattern
 import jakarta.validation.constraints.Size
 
 data class LoginRequest(
