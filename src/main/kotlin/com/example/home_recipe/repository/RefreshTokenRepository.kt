@@ -7,5 +7,7 @@ import java.util.*
 
 @Repository
 interface RefreshTokenRepository : JpaRepository<RefreshToken, Long> {
-    fun findByEmail(email: String): Optional<RefreshToken>
+    fun findByUser_Email(email: String): Optional<RefreshToken>
+
+    fun findByRefreshToken(refreshToken: String) : Optional<RefreshToken>
 }

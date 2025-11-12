@@ -38,5 +38,10 @@ class UserService(
             )
         )
     }
+
+    fun getUser(email: String): User {
+        return userRepository.findByEmail(email)
+            .orElseThrow { BusinessException(UserCode.LOGIN_ERROR_002, HttpStatus.UNAUTHORIZED) }
+    }
 }
 

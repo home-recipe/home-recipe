@@ -1,26 +1,42 @@
 package com.example.home_recipe.controller.dto.auth
 
 import com.example.home_recipe.controller.dto.auth.dto.TokenDto
+import com.example.home_recipe.controller.dto.auth.dto.request.ReissueTokenRequest
+import com.example.home_recipe.controller.dto.auth.dto.response.AccessTokenResponse
+import com.example.home_recipe.controller.dto.user.dto.request.LoginRequest
 import com.example.home_recipe.global.response.ApiResponse
-import com.example.home_recipe.global.response.code.UserCode
+import com.example.home_recipe.global.response.code.AuthCode
 import com.example.home_recipe.service.auth.AuthService
+import jakarta.validation.Valid
+import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
+import org.springframework.security.core.annotation.AuthenticationPrincipal
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
 
 @RestController
-@RequestMapping("/auth")
+@RequestMapping("/api/auth")
 class AuthController(
     private val authService: AuthService
 ) {
 
-    @PostMapping("/refresh")
-    fun refreshAccessToken(@RequestBody request: TokenDto): ResponseEntity<ApiResponse<TokenDto>> {
+    @PostMapping("/login")
+    fun login(@Valid @RequestBody request: LoginRequest): ResponseEntity<ApiResponse<TokenDto>> {
+        return ApiResponse.success(authService.login(request), AuthCode.AUTH_LOGIN_SUCCESS, HttpStatus.OK)
+    }
+
+    @PostMapping("/logout")
+    fun logout(@AuthenticationPrincipal email: String): ResponseEntity<ApiResponse<Unit>> {
+        return ApiResponse.success(authService.logout(email), AuthCode.AUTH_LOGOUT_SUCCESS, HttpStatus.OK)
+    }
+
+    @PostMapping("/reissue")
+    fun reissueAccessToken(@RequestBody request: ReissueTokenRequest): ResponseEntity<ApiResponse<AccessTokenResponse>> {
         return ApiResponse.success(
-            authService.refreshToken(request),
-            UserCode.AUTH_RENEWAL_SUCCESS
+            authService.reissueAccessToken(request.refreshToken),
+            AuthCode.AUTH_REISSUE_SUCCESS
         )
     }
 }
