@@ -1,12 +1,9 @@
 package com.example.home_recipe.controller.dto.user
 
-import com.example.home_recipe.controller.dto.auth.dto.TokenDto
 import com.example.home_recipe.controller.dto.user.dto.request.JoinRequest
-import com.example.home_recipe.controller.dto.user.dto.request.LoginRequest
 import com.example.home_recipe.controller.dto.user.dto.response.JoinResponse
 import com.example.home_recipe.global.response.ApiResponse
 import com.example.home_recipe.global.response.code.UserCode
-import com.example.home_recipe.service.auth.AuthService
 import com.example.home_recipe.service.user.UserService
 import jakarta.validation.Valid
 import org.springframework.http.HttpStatus
@@ -18,19 +15,13 @@ import org.springframework.web.bind.annotation.RestController
 
 
 @RestController
-@RequestMapping("/user")
+@RequestMapping("/api/user")
 class UserController(
     private val userService: UserService,
-    private val authService: AuthService
 ) {
 
     @PostMapping
     fun join(@Valid @RequestBody request: JoinRequest): ResponseEntity<ApiResponse<JoinResponse>> {
         return ApiResponse.success(userService.join(request), UserCode.SIGNUP_SUCCESS, HttpStatus.CREATED)
-    }
-
-    @PostMapping("/login")
-    fun login(@Valid @RequestBody request: LoginRequest): ResponseEntity<ApiResponse<TokenDto>> {
-        return ApiResponse.success(authService.login(request), UserCode.LOGIN_SUCCESS, HttpStatus.OK)
     }
 }
