@@ -41,3 +41,6 @@ out/
 
 ### .env ###
 .env
+
+### 테스트 환경 ###
+src/test/resources/application-test.yml
