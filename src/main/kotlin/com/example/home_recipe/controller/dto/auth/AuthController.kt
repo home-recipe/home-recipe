@@ -1,7 +1,6 @@
 package com.example.home_recipe.controller.dto.auth
 
-import com.example.home_recipe.controller.dto.auth.dto.TokenDto
-import com.example.home_recipe.controller.dto.auth.dto.request.ReissueTokenRequest
+import com.example.home_recipe.controller.dto.auth.dto.response.LoginResponse
 import com.example.home_recipe.controller.dto.auth.dto.response.AccessTokenResponse
 import com.example.home_recipe.controller.dto.user.dto.request.LoginRequest
 import com.example.home_recipe.global.response.ApiResponse
@@ -23,7 +22,7 @@ class AuthController(
 ) {
 
     @PostMapping("/login")
-    fun login(@Valid @RequestBody request: LoginRequest): ResponseEntity<ApiResponse<TokenDto>> {
+    fun login(@Valid @RequestBody request: LoginRequest): ResponseEntity<ApiResponse<LoginResponse>> {
         return ApiResponse.success(authService.login(request), AuthCode.AUTH_LOGIN_SUCCESS, HttpStatus.OK)
     }
 
@@ -33,10 +32,11 @@ class AuthController(
     }
 
     @PostMapping("/reissue")
-    fun reissueAccessToken(@RequestBody request: ReissueTokenRequest): ResponseEntity<ApiResponse<AccessTokenResponse>> {
+    fun reissueAccessToken(@AuthenticationPrincipal email: String): ResponseEntity<ApiResponse<AccessTokenResponse>> {
         return ApiResponse.success(
-            authService.reissueAccessToken(request.refreshToken),
-            AuthCode.AUTH_REISSUE_SUCCESS
+            authService.reissueAccessToken(email),
+            AuthCode.AUTH_REISSUE_SUCCESS,
+            HttpStatus.OK
         )
     }
 }
