@@ -9,9 +9,12 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.config.annotation.web.builders.HttpSecurity
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity
 import org.springframework.security.config.http.SessionCreationPolicy
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder
+import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.security.oauth2.jwt.Jwt
 import org.springframework.security.oauth2.jwt.JwtDecoder
 import org.springframework.security.oauth2.jwt.NimbusJwtDecoder
+import org.springframework.security.oauth2.server.resource.web.BearerTokenResolver
 import org.springframework.security.web.SecurityFilterChain
 import javax.crypto.spec.SecretKeySpec
 
@@ -26,6 +29,9 @@ class SecurityConfig(
     companion object {
         const val JWT_SIGNATURE_ALGORITHM = "HmacSHA256"
         const val EMAIL = "email"
+        const val AUTHORIZATION = "authorization"
+        const val BEARER = "Bearer "
+        const val BEARER_LENGTH = 7;
     }
 
     @Bean
@@ -43,6 +49,11 @@ class SecurityConfig(
     }
 
     @Bean
+    fun passwordEncoder(): PasswordEncoder {
+        return BCryptPasswordEncoder()
+    }
+
+    @Bean
     fun filterChain(http: HttpSecurity): SecurityFilterChain {
         http
             .csrf { it.disable() }
@@ -52,7 +63,7 @@ class SecurityConfig(
                     "/api/user/**",
                     "/api/auth/reissue",
                     "/api/auth/login"
-                    ).permitAll()
+                ).permitAll()
                 it.anyRequest().authenticated()
             }
             .exceptionHandling {

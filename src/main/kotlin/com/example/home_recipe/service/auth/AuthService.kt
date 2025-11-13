@@ -1,12 +1,12 @@
 package com.example.home_recipe.service.auth
 
-import com.example.home_recipe.controller.dto.auth.dto.TokenDto
+import com.example.home_recipe.controller.dto.auth.dto.response.LoginResponse
 import com.example.home_recipe.controller.dto.auth.dto.response.AccessTokenResponse
 import com.example.home_recipe.controller.dto.user.dto.request.LoginRequest
 import com.example.home_recipe.domain.auth.config.JwtTokenProvider
 import com.example.home_recipe.global.exception.BusinessException
+import com.example.home_recipe.global.response.code.AuthCode
 import com.example.home_recipe.global.response.code.UserCode
-import com.example.home_recipe.repository.UserRepository
 import com.example.home_recipe.service.user.UserService
 import jakarta.transaction.Transactional
 import org.springframework.http.HttpStatus
@@ -21,14 +21,14 @@ class AuthService(
     private val userService: UserService
 ) {
     @Transactional
-    fun login(request: LoginRequest): TokenDto {
+    fun login(request: LoginRequest): LoginResponse {
         val user = userService.getUser(request.email)
         checkPassword(request.password, user.password)
 
         val accessToken = jwtTokenProvider.createAccessToken(user.email)
         val refreshToken = jwtTokenProvider.createRefreshToken(user.email)
         tokenService.synchronizeRefreshToken(user, refreshToken)
-        return TokenDto(accessToken, refreshToken)
+        return LoginResponse(accessToken, refreshToken)
     }
 
     fun checkPassword(rawPassword: String, encryptedPassword: String) {
@@ -37,12 +37,13 @@ class AuthService(
         }
     }
 
-    fun reissueAccessToken(refreshToken: String): AccessTokenResponse {
-        jwtTokenProvider.validateToken(refreshToken)
-        val validRefreshToken = tokenService.getValidRefreshToken(refreshToken)
-        val user = validRefreshToken.user
-        val newAccessToken = jwtTokenProvider.createAccessToken(user.email)
-        return AccessTokenResponse(newAccessToken)
+    fun reissueAccessToken(email: String): AccessTokenResponse {
+        val isExistUser = userService.isExistUser(email)
+        if(!isExistUser) {
+            throw BusinessException(AuthCode.AUTH_INVALID_TOKEN, HttpStatus.UNAUTHORIZED)
+        }
+        val accessToken = jwtTokenProvider.createAccessToken(email)
+        return AccessTokenResponse(accessToken)
     }
 
     @Transactional

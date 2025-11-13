@@ -43,5 +43,9 @@ class UserService(
         return userRepository.findByEmail(email)
             .orElseThrow { BusinessException(UserCode.LOGIN_ERROR_002, HttpStatus.UNAUTHORIZED) }
     }
+
+    fun isExistUser(email: String): Boolean {
+        return userRepository.existsByEmail(email)
+    }
 }
 

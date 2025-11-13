@@ -3,14 +3,14 @@ package com.example.home_recipe.domain.user
 import jakarta.persistence.*
 
 @Entity
-@Table(name = "user")
+@Table(name = "users")
 class User(
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     val id: Long? = null,
 
-    @Column(nullable = false)
+    @Column(nullable = true)
     var refrigeratorId: Long? = null,
 
     @Column(nullable = false, length = 100)
