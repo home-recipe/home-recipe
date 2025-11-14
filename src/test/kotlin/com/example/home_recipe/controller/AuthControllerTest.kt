@@ -9,7 +9,7 @@ import com.example.home_recipe.service.auth.AuthService
 import com.example.home_recipe.service.user.UserService
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.registerKotlinModule
-import org.junit.jupiter.api.AfterEach
+import jakarta.transaction.Transactional
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
@@ -27,6 +27,7 @@ import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 @SpringBootTest
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
+@Transactional
 class AuthControllerTest {
 
     @Autowired
@@ -49,13 +50,6 @@ class AuthControllerTest {
         const val EMAIL = "user123@naver.com"
         const val PASSWORD = "password123"
     }
-
-    @AfterEach
-    fun deleteAll() {
-        refreshTokenRepository.deleteAll()
-        userRepository.deleteAll()
-    }
-
 
     /////// 해피 테스트
     @Test

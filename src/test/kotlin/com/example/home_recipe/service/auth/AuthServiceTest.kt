@@ -8,6 +8,8 @@ import com.example.home_recipe.global.exception.BusinessException
 import com.example.home_recipe.repository.RefreshTokenRepository
 import com.example.home_recipe.repository.UserRepository
 import com.example.home_recipe.service.user.UserService
+import jakarta.persistence.EntityManager
+import jakarta.transaction.Transactional
 import org.assertj.core.api.Assertions
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.AfterEach
@@ -21,13 +23,8 @@ import kotlin.test.Test
 
 @SpringBootTest
 @ActiveProfiles("test")
+@Transactional
 class AuthServiceTest {
-    @Autowired
-    private lateinit var jwtTokenProvider: JwtTokenProvider
-    @Autowired
-    private lateinit var passwordEncoder: PasswordEncoder
-    @Autowired
-    private lateinit var tokenService: TokenService
     @Autowired
     private lateinit var userService: UserService
     @Autowired
@@ -35,18 +32,12 @@ class AuthServiceTest {
     @Autowired
     private lateinit var tokenRepository: RefreshTokenRepository
     @Autowired
-    private lateinit var userRepository: UserRepository
+    private lateinit var em : EntityManager
 
     companion object {
         const val NAME = "user"
         const val EMAIL = "user123@naver.com"
         const val PASSWORD = "password123"
-    }
-
-    @AfterEach
-    fun deleteAll() {
-        tokenRepository.deleteAll()
-        userRepository.deleteAll()
     }
 
     ////// 해피 테스트
@@ -59,7 +50,7 @@ class AuthServiceTest {
         //when
         val loginResponse = authService.login(loginRequest)
         //then
-        Assertions.assertThat(loginResponse.accessToken).isNotNull()
+        assertThat(loginResponse.accessToken).isNotNull()
     }
 
     @Test
@@ -89,6 +80,8 @@ class AuthServiceTest {
         authService.login(loginRequest)
         val before = tokenRepository.findByUser_Email(EMAIL)
         authService.login(loginRequest)
+        em.flush()
+        em.clear()
         val after = tokenRepository.findByUser_Email(EMAIL)
         //then
         assertThat(before).isNotEqualTo(after)

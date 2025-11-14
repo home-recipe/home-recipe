@@ -4,6 +4,8 @@ import com.example.home_recipe.domain.user.User
 import com.example.home_recipe.repository.RefreshTokenRepository
 import com.example.home_recipe.repository.UserRepository
 import com.example.home_recipe.service.user.UserService
+import jakarta.persistence.EntityManager
+import jakarta.transaction.Transactional
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.DisplayName
@@ -15,13 +17,14 @@ import kotlin.test.Test
 
 @SpringBootTest
 @ActiveProfiles("test")
+@Transactional
 class TokenServiceTest {
     @Autowired
     private lateinit var userRepository: UserRepository
     @Autowired
     private lateinit var tokenRepository: RefreshTokenRepository
     @Autowired
-    private lateinit var userService: UserService
+    private lateinit var em : EntityManager
     @Autowired
     private lateinit var tokenService: TokenService
 
@@ -67,6 +70,8 @@ class TokenServiceTest {
 
         //when
         tokenService.synchronizeRefreshToken(user, AFTER_REFRESH_TOKEN)
+        em.flush()
+        em.clear()
         val after = tokenRepository.findByUser_Email(EMAIL)
 
         //then
