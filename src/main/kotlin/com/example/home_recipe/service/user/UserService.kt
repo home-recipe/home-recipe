@@ -1,60 +1,51 @@
 package com.example.home_recipe.service.user
 
-import com.example.home_recipe.controller.user.dto.JoinRequest
-import com.example.home_recipe.controller.user.dto.UserResponse
+import com.example.home_recipe.controller.dto.user.dto.request.JoinRequest
+import com.example.home_recipe.controller.dto.user.dto.response.JoinResponse
+import com.example.home_recipe.controller.dto.user.dto.response.UserResponseAssembler
 import com.example.home_recipe.domain.user.Role
 import com.example.home_recipe.domain.user.User
 import com.example.home_recipe.global.exception.BusinessException
-import com.example.home_recipe.global.response.ResponseCode
+import com.example.home_recipe.global.response.code.UserCode
 import com.example.home_recipe.repository.UserRepository
+import org.springframework.http.HttpStatus
 import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.stereotype.Service
 
 @Service
 class UserService(
     private val userRepository: UserRepository,
-    private val passwordEncoder: PasswordEncoder
+    private val passwordEncoder: PasswordEncoder,
 ) {
-    fun join(request: JoinRequest): UserResponse {
-        val loginId = request.loginId
+
+    fun join(request: JoinRequest): JoinResponse {
         val email = request.email
-        val phoneNumber = request.phoneNumber
         val encryptedPassword = passwordEncoder.encode(request.password)
         val name = request.name
 
-        if (userRepository.existsByLoginId(loginId)) {
-            throw BusinessException(ResponseCode.SIGNUP_ERROR_007)
-        }
         if (userRepository.existsByEmail(email)) {
-            throw BusinessException(ResponseCode.SIGNUP_ERROR_005)
-        }
-        if (userRepository.existsByPhoneNumber(phoneNumber)) {
-            throw BusinessException(ResponseCode.SIGNUP_ERROR_008)
+            throw BusinessException(UserCode.SIGNUP_ERROR_005, HttpStatus.BAD_REQUEST)
         }
 
-        return toDto(
+        return UserResponseAssembler.toJoinResponse(
             userRepository.save(
                 User(
-                    loginId = loginId,
                     password = encryptedPassword,
                     name = name,
                     email = email,
-                    phoneNumber = phoneNumber,
                     role = Role.USER
                 )
             )
         )
     }
 
+    fun getUser(email: String): User {
+        return userRepository.findByEmail(email)
+            .orElseThrow { BusinessException(UserCode.LOGIN_ERROR_002, HttpStatus.UNAUTHORIZED) }
+    }
 
-    fun toDto(user: User): UserResponse {
-        return UserResponse(
-            loginId = user.loginId,
-            name = user.name,
-            email = user.email,
-            phoneNumber = user.phoneNumber,
-            role = user.role.name
-        )
+    fun isExistUser(email: String): Boolean {
+        return userRepository.existsByEmail(email)
     }
 }
 
