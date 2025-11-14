@@ -15,7 +15,7 @@ class GlobalExceptionHandlerTest {
     fun handleBusinessException_테스트() {
         // given
         val exception = BusinessException(
-            baseCode = UserCode.AUTH_ERROR_001,
+            baseCode = UserCode.SIGNUP_ERROR_002,
             status = HttpStatus.UNAUTHORIZED
         )
 
@@ -24,7 +24,7 @@ class GlobalExceptionHandlerTest {
 
         // then
         assertThat(response.statusCode).isEqualTo(HttpStatus.UNAUTHORIZED)
-        assertThat(response.body!!.response.code).isEqualTo(UserCode.AUTH_ERROR_001.code)
-        assertThat(response.body!!.message).isEqualTo(UserCode.AUTH_ERROR_001.message)
+        assertThat(response.body!!.response.code).isEqualTo(UserCode.SIGNUP_ERROR_002.code)
+        assertThat(response.body!!.message).isEqualTo(UserCode.SIGNUP_ERROR_002.message)
     }
 }
