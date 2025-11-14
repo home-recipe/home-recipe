@@ -6,9 +6,11 @@ import com.example.home_recipe.controller.dto.user.dto.response.JoinResponse
 import com.example.home_recipe.domain.auth.config.JwtTokenProvider
 import com.example.home_recipe.global.exception.BusinessException
 import com.example.home_recipe.repository.RefreshTokenRepository
+import com.example.home_recipe.repository.UserRepository
 import com.example.home_recipe.service.user.UserService
 import org.assertj.core.api.Assertions
 import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.assertAll
 import org.springframework.beans.factory.annotation.Autowired
@@ -22,26 +24,29 @@ import kotlin.test.Test
 class AuthServiceTest {
     @Autowired
     private lateinit var jwtTokenProvider: JwtTokenProvider
-
     @Autowired
     private lateinit var passwordEncoder: PasswordEncoder
-
     @Autowired
     private lateinit var tokenService: TokenService
-
     @Autowired
     private lateinit var userService: UserService
-
     @Autowired
     private lateinit var authService: AuthService
-
     @Autowired
     private lateinit var tokenRepository: RefreshTokenRepository
+    @Autowired
+    private lateinit var userRepository: UserRepository
 
     companion object {
         const val NAME = "user"
         const val EMAIL = "user123@naver.com"
         const val PASSWORD = "password123"
+    }
+
+    @AfterEach
+    fun deleteAll() {
+        tokenRepository.deleteAll()
+        userRepository.deleteAll()
     }
 
     ////// 해피 테스트

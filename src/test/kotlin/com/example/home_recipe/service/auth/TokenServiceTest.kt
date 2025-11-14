@@ -5,6 +5,7 @@ import com.example.home_recipe.repository.RefreshTokenRepository
 import com.example.home_recipe.repository.UserRepository
 import com.example.home_recipe.service.user.UserService
 import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.assertAll
 import org.springframework.beans.factory.annotation.Autowired
@@ -17,13 +18,10 @@ import kotlin.test.Test
 class TokenServiceTest {
     @Autowired
     private lateinit var userRepository: UserRepository
-
     @Autowired
     private lateinit var tokenRepository: RefreshTokenRepository
-
     @Autowired
     private lateinit var userService: UserService
-
     @Autowired
     private lateinit var tokenService: TokenService
 
@@ -33,6 +31,12 @@ class TokenServiceTest {
         const val PASSWORD = "password123"
         const val BEFORE_REFRESH_TOKEN = "beforeRefreshToken"
         const val AFTER_REFRESH_TOKEN = "afterRefreshToken"
+    }
+
+    @AfterEach
+    fun deleteAll() {
+        tokenRepository.deleteAll()
+        userRepository.deleteAll()
     }
 
     @Test

@@ -1,6 +1,6 @@
 package com.example.home_recipe.global.exception
 
-import com.example.home_recipe.global.response.code.UserCode
+import com.example.home_recipe.global.response.code.AuthCode
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.DisplayName
 import org.springframework.http.HttpStatus
@@ -12,7 +12,7 @@ class BusinessExceptionTest {
     @DisplayName("BusinessException 생성 시 필드 값이 올바르게 설정된다")
     fun businessException_생성_테스트() {
         // given
-        val responseCode = UserCode.AUTH_ERROR_001
+        val responseCode = AuthCode.AUTH_INVALID_TOKEN
         val status = HttpStatus.UNAUTHORIZED
 
         // when

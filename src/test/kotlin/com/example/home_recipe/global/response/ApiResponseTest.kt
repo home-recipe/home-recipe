@@ -14,7 +14,7 @@ class ApiResponseTest {
     fun success_응답_테스트() {
         //given
         val data = "data"
-        val responseCode = UserCode.AUTH_SUCCESS
+        val responseCode = UserCode.SIGNUP_ERROR_002
 
         //when
         val response: ResponseEntity<ApiResponse<String>> =
@@ -32,11 +32,11 @@ class ApiResponseTest {
     @DisplayName("error()가 올바른 ApiResponse를 반환한다")
     fun error_응답_테스트() {
         // given
-        val responseCode = UserCode.AUTH_ERROR_001
+        val responseCode = UserCode.LOGIN_ERROR_001
 
         // when
         val response: ResponseEntity<ApiResponse<Unit>> =
-            ApiResponse.error(responseCode, HttpStatus.UNAUTHORIZED)
+            ApiResponse.error(null, responseCode, HttpStatus.UNAUTHORIZED)
 
         // then
         assertThat(response.statusCode).isEqualTo(HttpStatus.UNAUTHORIZED)

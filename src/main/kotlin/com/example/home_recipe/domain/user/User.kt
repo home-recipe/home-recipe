@@ -27,8 +27,8 @@ class User(
     var role: Role = Role.USER
 ) {
     constructor(
-        password: String,
         name: String,
+        password: String,
         email: String,
         role: Role = Role.USER
     ) : this(

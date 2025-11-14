@@ -31,7 +31,7 @@ class AuthService(
         return LoginResponse(accessToken, refreshToken)
     }
 
-    fun checkPassword(rawPassword: String, encryptedPassword: String) {
+    private fun checkPassword(rawPassword: String, encryptedPassword: String) {
         if (!passwordEncoder.matches(rawPassword, encryptedPassword)) {
             throw BusinessException(UserCode.LOGIN_ERROR_003, HttpStatus.UNAUTHORIZED)
         }

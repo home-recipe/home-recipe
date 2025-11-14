@@ -1,23 +1,16 @@
 package com.example.home_recipe.service.user
 
 import com.example.home_recipe.controller.dto.user.dto.request.JoinRequest
-import com.example.home_recipe.domain.user.Role
-import com.example.home_recipe.domain.user.User
 import com.example.home_recipe.global.exception.BusinessException
 import com.example.home_recipe.global.response.code.UserCode
+import com.example.home_recipe.repository.RefreshTokenRepository
 import com.example.home_recipe.repository.UserRepository
 import org.assertj.core.api.Assertions
 import org.assertj.core.api.Assertions.assertThatThrownBy
+import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.extension.ExtendWith
-import org.mockito.kotlin.any
-import org.mockito.InjectMocks
-import org.mockito.Mock
-import org.mockito.junit.jupiter.MockitoExtension
-import org.mockito.kotlin.whenever
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.test.context.ActiveProfiles
@@ -27,15 +20,26 @@ import org.springframework.test.context.ActiveProfiles
 class UserServiceTest {
     @Autowired
     private lateinit var userRepository: UserRepository
+
     @Autowired
     private lateinit var passwordEncoder: PasswordEncoder
+
     @Autowired
     private lateinit var userService: UserService
+
+    @Autowired
+    private lateinit var tokenRepository: RefreshTokenRepository
 
     companion object {
         const val NAME = "user"
         const val EMAIL = "user123@naver.com"
         const val PASSWORD = "password123"
+    }
+
+    @AfterEach
+    fun deleteAll() {
+        tokenRepository.deleteAll()
+        userRepository.deleteAll()
     }
 
     //////해피 테스트
