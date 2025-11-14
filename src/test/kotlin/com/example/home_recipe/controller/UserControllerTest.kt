@@ -12,6 +12,7 @@ import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.http.MediaType
 import com.fasterxml.jackson.module.kotlin.registerKotlinModule
+import jakarta.transaction.Transactional
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.ValueSource
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath
@@ -22,6 +23,7 @@ import kotlin.test.Test
 @SpringBootTest
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
+@Transactional
 class UserControllerTest {
 
     @Autowired
