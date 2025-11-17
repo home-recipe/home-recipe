@@ -3,7 +3,6 @@ package com.example.home_recipe.service.auth
 import com.example.home_recipe.domain.user.User
 import com.example.home_recipe.repository.RefreshTokenRepository
 import com.example.home_recipe.repository.UserRepository
-import com.example.home_recipe.service.user.UserService
 import jakarta.persistence.EntityManager
 import jakarta.transaction.Transactional
 import org.assertj.core.api.Assertions.assertThat
@@ -21,10 +20,13 @@ import kotlin.test.Test
 class TokenServiceTest {
     @Autowired
     private lateinit var userRepository: UserRepository
+
     @Autowired
     private lateinit var tokenRepository: RefreshTokenRepository
+
     @Autowired
-    private lateinit var em : EntityManager
+    private lateinit var em: EntityManager
+
     @Autowired
     private lateinit var tokenService: TokenService
 
