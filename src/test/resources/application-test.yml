@@ -1,0 +1,23 @@
+spring:
+  datasource:
+    url: jdbc:h2:mem:testdb;MODE=MYSQL
+    username: sa
+    driver-class-name: org.h2.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: create
+    show-sql: true
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.H2Dialect
+        format_sql: true
+
+jwt:
+  secret: homeRecipe20251022epiceRemoh!@#&!@*@
+  access-expiration: 3600000
+  refresh-expiration: 1209600000
+
+logging:
+  level:
+    org.hibernate.SQL: debug
