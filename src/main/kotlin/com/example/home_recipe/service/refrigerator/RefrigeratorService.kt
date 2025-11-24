@@ -71,9 +71,9 @@ class RefrigeratorService(
     }
 
     @Transactional
-    @TransactionalEventListener(phase = TransactionPhase.BEFORE_COMMIT)
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     fun onUserJoined(event: UserJoinedEvent) {
-        val user = userRepository.findByEmail(event.email)
+        val user = userRepository.findById(event.userId)
             .orElseThrow { BusinessException(UserCode.LOGIN_ERROR_002, HttpStatus.UNAUTHORIZED) }
 
         val fridge = refrigeratorRepository.save(Refrigerator.create())
