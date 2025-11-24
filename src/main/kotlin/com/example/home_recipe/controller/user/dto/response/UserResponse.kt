@@ -1,4 +1,4 @@
-package com.example.home_recipe.controller.user.dto
+package com.example.home_recipe.controller.user.dto.response
 
 data class UserResponse(
     val name: String,

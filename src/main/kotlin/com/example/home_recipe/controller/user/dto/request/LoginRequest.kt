@@ -1,4 +1,4 @@
-package com.example.home_recipe.controller.dto.user.dto.request
+package com.example.home_recipe.controller.user.dto.request
 
 import jakarta.validation.constraints.Email
 import jakarta.validation.constraints.NotBlank

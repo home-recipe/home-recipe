@@ -1,6 +1,6 @@
 package com.example.home_recipe.controller
 
-import com.example.home_recipe.controller.dto.user.dto.request.JoinRequest
+import com.example.home_recipe.controller.user.dto.request.JoinRequest
 import com.example.home_recipe.service.user.UserService
 import com.fasterxml.jackson.databind.ObjectMapper
 import org.junit.jupiter.api.DisplayName

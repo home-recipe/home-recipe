@@ -1,8 +1,8 @@
 package com.example.home_recipe.service.user
 
-import com.example.home_recipe.controller.dto.user.dto.request.JoinRequest
-import com.example.home_recipe.controller.dto.user.dto.response.JoinResponse
-import com.example.home_recipe.controller.dto.user.dto.response.UserResponseAssembler
+import com.example.home_recipe.controller.user.dto.request.JoinRequest
+import com.example.home_recipe.controller.user.dto.response.JoinResponse
+import com.example.home_recipe.controller.user.dto.response.UserResponseAssembler
 import com.example.home_recipe.domain.user.Role
 import com.example.home_recipe.domain.user.User
 import com.example.home_recipe.global.exception.BusinessException

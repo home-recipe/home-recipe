@@ -1,4 +1,4 @@
-package com.example.home_recipe.controller.dto.user.dto.response
+package com.example.home_recipe.controller.user.dto.response
 
 import com.example.home_recipe.domain.user.User
 

@@ -1,8 +1,7 @@
-package com.example.home_recipe.controller.user.dto
+package com.example.home_recipe.controller.user.dto.request
 
 import jakarta.validation.constraints.Email
 import jakarta.validation.constraints.NotBlank
-import jakarta.validation.constraints.Pattern
 import jakarta.validation.constraints.Size
 
 
@@ -16,12 +15,6 @@ data class JoinRequest(
     ) val name: String,
 
     @field:NotBlank(message = "SIGNUP_ERROR_001")
-    @field:Pattern(
-        regexp = "^(?=.*[a-z])(?=.*\\d)[a-z0-9]{5,20}\$",
-        message = "SIGNUP_ERROR_009"
-    ) val loginId: String,
-
-    @field:NotBlank(message = "SIGNUP_ERROR_001")
     @field:Size(
         min = 8,
         max = 20,
@@ -31,10 +24,4 @@ data class JoinRequest(
     @field:NotBlank(message = "SIGNUP_ERROR_001")
     @field:Email(message = "SIGNUP_ERROR_004")
     val email: String,
-
-    @field:NotBlank(message = "SIGNUP_ERROR_001")
-    @field:Pattern(
-        regexp = "^010[0-9]{8}\$",
-        message = "SIGNUP_ERROR_010"
-    ) val phoneNumber: String
 )

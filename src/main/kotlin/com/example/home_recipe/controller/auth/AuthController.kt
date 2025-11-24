@@ -1,8 +1,8 @@
-package com.example.home_recipe.controller.dto.auth
+package com.example.home_recipe.controller.auth
 
-import com.example.home_recipe.controller.dto.auth.dto.response.LoginResponse
-import com.example.home_recipe.controller.dto.auth.dto.response.AccessTokenResponse
-import com.example.home_recipe.controller.dto.user.dto.request.LoginRequest
+import com.example.home_recipe.controller.auth.dto.response.LoginResponse
+import com.example.home_recipe.controller.auth.dto.response.AccessTokenResponse
+import com.example.home_recipe.controller.user.dto.request.LoginRequest
 import com.example.home_recipe.global.response.ApiResponse
 import com.example.home_recipe.global.response.code.AuthCode
 import com.example.home_recipe.service.auth.AuthService
