@@ -1,6 +1,6 @@
 package com.example.home_recipe.service.refrigerator
 
-import com.example.home_recipe.controller.dto.user.dto.UserJoinedEvent
+import com.example.home_recipe.controller.refrigerator.dto.UserJoinedEvent
 import jakarta.transaction.Transactional
 import org.springframework.context.ApplicationEventPublisher
 import org.springframework.stereotype.Service

@@ -1,14 +1,13 @@
 package com.example.home_recipe.controller.ingredient
 
-import com.example.home_recipe.controller.dto.ingredient.CreateIngredientBatchRequest
-import com.example.home_recipe.controller.dto.ingredient.CreateIngredientRequest
-import com.example.home_recipe.controller.dto.ingredient.IngredientResponse
-import com.example.home_recipe.controller.dto.ingredient.UpdateIngredientRequest
+import com.example.home_recipe.controller.ingredient.dto.request.CreateIngredientBatchRequest
+import com.example.home_recipe.controller.ingredient.dto.request.CreateIngredientRequest
+import com.example.home_recipe.controller.ingredient.dto.response.IngredientResponse
+import com.example.home_recipe.controller.ingredient.dto.request.UpdateIngredientRequest
 import com.example.home_recipe.global.response.ApiResponse
 import com.example.home_recipe.global.response.code.IngredientCode
 import com.example.home_recipe.service.ingredient.IngredientService
 import jakarta.validation.Valid
-import jakarta.validation.constraints.Size
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*

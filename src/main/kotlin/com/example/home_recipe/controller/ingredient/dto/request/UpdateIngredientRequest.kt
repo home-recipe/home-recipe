@@ -1,11 +1,11 @@
-package com.example.home_recipe.controller.dto.ingredient
+package com.example.home_recipe.controller.ingredient.dto.request
 
 import com.example.home_recipe.domain.ingredient.IngredientCategory
 import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.NotNull
 import jakarta.validation.constraints.Size
 
-data class CreateIngredientRequest(
+data class UpdateIngredientRequest(
     @field:NotNull(message = "INGREDIENT_ERROR_013")
     val category: IngredientCategory?,
 

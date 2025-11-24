@@ -1,4 +1,4 @@
-package com.example.home_recipe.controller.dto.user.dto
+package com.example.home_recipe.controller.refrigerator.dto
 
 data class UserJoinedEvent(
     val userId: Long,

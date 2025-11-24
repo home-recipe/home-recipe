@@ -1,6 +1,6 @@
 package com.example.home_recipe.service.refrigerator
 
-import com.example.home_recipe.controller.dto.user.dto.UserJoinedEvent
+import com.example.home_recipe.controller.refrigerator.dto.UserJoinedEvent
 import com.example.home_recipe.domain.refrigerator.Refrigerator
 import com.example.home_recipe.global.exception.BusinessException
 import com.example.home_recipe.global.response.code.IngredientCode

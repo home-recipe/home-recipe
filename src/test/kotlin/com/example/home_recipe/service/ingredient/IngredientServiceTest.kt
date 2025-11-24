@@ -1,7 +1,7 @@
 package com.example.home_recipe.service.ingredient
 
-import com.example.home_recipe.controller.dto.ingredient.CreateIngredientRequest
-import com.example.home_recipe.controller.dto.ingredient.UpdateIngredientRequest
+import com.example.home_recipe.controller.ingredient.dto.request.CreateIngredientRequest
+import com.example.home_recipe.controller.ingredient.dto.request.UpdateIngredientRequest
 import com.example.home_recipe.domain.ingredient.Ingredient
 import com.example.home_recipe.domain.ingredient.IngredientCategory
 import com.example.home_recipe.global.exception.BusinessException

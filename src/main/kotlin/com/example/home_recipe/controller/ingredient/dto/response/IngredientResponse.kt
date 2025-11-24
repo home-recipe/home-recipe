@@ -1,4 +1,4 @@
-package com.example.home_recipe.controller.dto.ingredient
+package com.example.home_recipe.controller.ingredient.dto.response
 
 import com.example.home_recipe.domain.ingredient.IngredientCategory
 

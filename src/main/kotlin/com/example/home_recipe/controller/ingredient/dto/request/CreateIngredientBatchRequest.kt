@@ -1,4 +1,4 @@
-package com.example.home_recipe.controller.dto.ingredient
+package com.example.home_recipe.controller.ingredient.dto.request
 
 import jakarta.validation.Valid
 import jakarta.validation.constraints.Size

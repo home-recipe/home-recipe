@@ -1,5 +1,6 @@
 package com.example.home_recipe.controller.dto.ingredient
 
+import com.example.home_recipe.controller.ingredient.dto.request.UpdateIngredientRequest
 import com.example.home_recipe.domain.ingredient.IngredientCategory
 import jakarta.validation.Validation
 import org.assertj.core.api.Assertions.assertThat
