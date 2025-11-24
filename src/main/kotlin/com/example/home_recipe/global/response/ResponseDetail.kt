@@ -1,6 +1,6 @@
 package com.example.home_recipe.global.response
 
-class ResponseDetail<T> (
+data class ResponseDetail<T> (
     val code: String,
-    val data: T
+    val data: T? = null
 )
