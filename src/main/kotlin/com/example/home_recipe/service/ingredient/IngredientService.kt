@@ -1,9 +1,9 @@
 package com.example.home_recipe.service.ingredient
 
-import com.example.home_recipe.controller.dto.DtoMapper
 import com.example.home_recipe.controller.ingredient.dto.request.CreateIngredientRequest
 import com.example.home_recipe.controller.ingredient.dto.response.IngredientResponse
 import com.example.home_recipe.controller.ingredient.dto.request.UpdateIngredientRequest
+import com.example.home_recipe.controller.ingredient.dto.response.IngredientResponseAssembler
 import com.example.home_recipe.domain.ingredient.Ingredient
 import com.example.home_recipe.global.exception.BusinessException
 import com.example.home_recipe.global.response.code.IngredientCode
@@ -24,7 +24,7 @@ class IngredientService(
 
         val entity = Ingredient(category = category, name = request.name)
         val saved = ingredientRepository.save(entity)
-        return DtoMapper.toIngredientResponse(saved)
+        return IngredientResponseAssembler.toIngredientResponse(saved)
     }
 
     @Transactional
@@ -35,7 +35,7 @@ class IngredientService(
             Ingredient(category = category, name = req.name)
         }
         val saved = ingredientRepository.saveAll(entities)
-        return DtoMapper.toIngredientResponses(saved)
+        return IngredientResponseAssembler.toIngredientResponseList(saved)
     }
 
     @Transactional
@@ -49,7 +49,7 @@ class IngredientService(
         ingredient.category = category
         ingredient.name = request.name
 
-        return DtoMapper.toIngredientResponse(ingredient)
+        return IngredientResponseAssembler.toIngredientResponse(ingredient)
     }
 }
 
