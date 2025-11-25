@@ -23,7 +23,7 @@ class UserController(
         return ApiResponse.success(userService.join(request), UserCode.SIGNUP_SUCCESS, HttpStatus.CREATED)
     }
 
-    @GetMapping("/email")
+    @PostMapping("/email")
     fun validateEmail(@Valid @RequestBody request: EmailRequest) : ResponseEntity<ApiResponse<Unit>> {
         return ApiResponse.success(userService.validateEmail(request), UserCode.EMAIL_VALIDATION_SUCCESS, HttpStatus.OK)
     }

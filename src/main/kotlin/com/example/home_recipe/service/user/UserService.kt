@@ -24,6 +24,10 @@ class UserService(
         val encryptedPassword = passwordEncoder.encode(request.password)
         val name = request.name
 
+        if (userRepository.existsByEmail(email)) {
+            throw BusinessException(UserCode.SIGNUP_ERROR_005, HttpStatus.CONFLICT)
+        }
+
         return UserResponseAssembler.toJoinResponse(
             userRepository.save(
                 User(

@@ -8,6 +8,7 @@ import org.springframework.security.authentication.AbstractAuthenticationToken
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
 import org.springframework.security.config.annotation.web.builders.HttpSecurity
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity
+import org.springframework.security.config.annotation.web.configuration.WebSecurityCustomizer
 import org.springframework.security.config.http.SessionCreationPolicy
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder
 import org.springframework.security.crypto.password.PasswordEncoder
@@ -57,26 +58,38 @@ class SecurityConfig(
     fun filterChain(http: HttpSecurity): SecurityFilterChain {
         http
             .csrf { it.disable() }
-            .sessionManagement { it.sessionCreationPolicy(SessionCreationPolicy.STATELESS) }
+            .formLogin { it.disable() }
+            .httpBasic { it.disable() }
+            .logout { it.disable() }
+
+            .sessionManagement {
+                it.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+            }
+
             .authorizeHttpRequests {
                 it.requestMatchers(
                     "/api/user/**",
-                    "/api/auth/reissue",
-                    "/api/auth/login"
+                    "/api/auth/login",
+                    "/api/auth/reissue"
                 ).permitAll()
+
                 it.anyRequest().authenticated()
             }
-            .exceptionHandling {
-                it.authenticationEntryPoint(unauthorizedHandler)
-                it.accessDeniedHandler(forbiddenHandler)
-            }
+
             .oauth2ResourceServer { oauth2 ->
                 oauth2
+                    .authenticationEntryPoint(unauthorizedHandler)
                     .jwt { jwt ->
                         jwt.decoder(jwtDecoder())
                         jwt.jwtAuthenticationConverter(jwtAuthenticationConverter())
                     }
             }
+
+            .exceptionHandling {
+                it.authenticationEntryPoint(unauthorizedHandler)
+                it.accessDeniedHandler(forbiddenHandler)
+            }
+
         return http.build()
     }
 }
