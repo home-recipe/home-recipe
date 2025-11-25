@@ -1,5 +1,6 @@
 package com.example.home_recipe.service.user
 
+import com.example.home_recipe.controller.user.dto.request.EmailRequest
 import com.example.home_recipe.controller.user.dto.request.JoinRequest
 import com.example.home_recipe.controller.user.dto.response.JoinResponse
 import com.example.home_recipe.controller.user.dto.response.UserResponseAssembler
@@ -23,10 +24,6 @@ class UserService(
         val encryptedPassword = passwordEncoder.encode(request.password)
         val name = request.name
 
-        if (userRepository.existsByEmail(email)) {
-            throw BusinessException(UserCode.SIGNUP_ERROR_005, HttpStatus.BAD_REQUEST)
-        }
-
         return UserResponseAssembler.toJoinResponse(
             userRepository.save(
                 User(
@@ -37,6 +34,14 @@ class UserService(
                 )
             )
         )
+    }
+
+    fun validateEmail(request : EmailRequest) {
+        val email = request.email
+
+        if (userRepository.existsByEmail(email)) {
+            throw BusinessException(UserCode.SIGNUP_ERROR_005, HttpStatus.CONFLICT)
+        }
     }
 
     fun getUser(email: String): User {
