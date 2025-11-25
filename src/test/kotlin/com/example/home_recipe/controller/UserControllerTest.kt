@@ -1,5 +1,6 @@
 package com.example.home_recipe.controller
 
+import com.example.home_recipe.controller.user.dto.request.EmailRequest
 import com.example.home_recipe.controller.user.dto.request.JoinRequest
 import com.example.home_recipe.service.user.UserService
 import com.fasterxml.jackson.databind.ObjectMapper
@@ -15,6 +16,7 @@ import com.fasterxml.jackson.module.kotlin.registerKotlinModule
 import jakarta.transaction.Transactional
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.ValueSource
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 
@@ -54,6 +56,22 @@ class UserControllerTest {
             .andExpect(status().isCreated)
             .andExpect(jsonPath("$.response.code").value("SIGNUP_SUCCESS"))
             .andExpect(jsonPath("$.response.data.email").value(EMAIL))
+    }
+
+    @Test
+    @DisplayName("이메일 중복이 없으면 200 OK와 EMAIL_VALIDATION_SUCCESS를 반환한다.")
+    fun validateEmail_success() {
+        // given - 중복되지 않은 이메일
+        val request = EmailRequest("unique123@test.com")
+
+        // when & then
+        mockMvc.perform(
+            get("/api/user/email")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(toJson(request))
+        )
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.response.code").value("EMAIL_VALIDATION_SUCCESS"))
     }
 
     //////예외 테스트
@@ -119,6 +137,24 @@ class UserControllerTest {
                 .content(toJson(request))
         )
             .andExpect(status().isBadRequest)
+    }
+
+    @Test
+    @DisplayName("이미 가입한 이메일이면 409 CONFLICT와 EMAIL_DUPLICATION_ERROR를 반환한다.")
+    fun validateEmail_fail() {
+        // given - 먼저 유저 1명을 회원가입 시켜서 이메일 중복 상태를 만든다
+        userService.join(JoinRequest(NAME, PASSWORD, EMAIL))
+
+        val request = EmailRequest(EMAIL)  // 이미 존재하는 이메일
+
+        // when & then
+        mockMvc.perform(
+            get("/api/user/email")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(toJson(request))
+        )
+            .andExpect(status().isConflict)
+            .andExpect(jsonPath("$.response.code").value("SIGNUP_ERROR_005"))
     }
 
     private fun toJson(obj: Any): String =

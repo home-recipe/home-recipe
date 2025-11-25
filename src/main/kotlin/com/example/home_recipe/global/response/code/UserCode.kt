@@ -2,6 +2,7 @@ package com.example.home_recipe.global.response.code
 
 enum class UserCode(override val code: String, override val message: String) : BaseCode {
     SIGNUP_SUCCESS("SIGNUP_SUCCESS", "회원가입 성공"),
+    EMAIL_VALIDATION_SUCCESS("EMAIL_VALIDATION_SUCCESS", "이메일 중복 여부 확인 성공"),
     SIGNUP_ERROR_001("SIGNUP_ERROR_001", "필수 필드 누락"),
     SIGNUP_ERROR_002("SIGNUP_ERROR_002", "이름이 너무 짧거나 김"),
     SIGNUP_ERROR_003("SIGNUP_ERROR_003", "비밀번호 정책 불일치"),
