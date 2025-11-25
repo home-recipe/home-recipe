@@ -9,6 +9,7 @@ import com.example.home_recipe.domain.user.User
 import com.example.home_recipe.global.exception.BusinessException
 import com.example.home_recipe.global.response.code.UserCode
 import com.example.home_recipe.repository.UserRepository
+import jakarta.transaction.Transactional
 import org.springframework.context.ApplicationEventPublisher
 import org.springframework.http.HttpStatus
 import org.springframework.security.crypto.password.PasswordEncoder
@@ -21,6 +22,7 @@ class UserService(
     private val eventPublisher: ApplicationEventPublisher,
 ) {
 
+    @Transactional
     fun join(request: JoinRequest): JoinResponse {
         val email = request.email
         val encryptedPassword = passwordEncoder.encode(request.password)
