@@ -44,6 +44,9 @@ dependencies {
 	testRuntimeOnly("org.junit.platform:junit-platform-launcher")
     testRuntimeOnly("com.h2database:h2")
     testImplementation("org.springframework.security:spring-security-test")
+
+    implementation ("org.springframework.boot:spring-boot-starter-actuator")
+    implementation ("io.micrometer:micrometer-registry-prometheus")
 }
 
 kotlin {
