@@ -62,7 +62,8 @@ class SecurityConfig(
                 it.requestMatchers(
                     "/api/user/**",
                     "/api/auth/reissue",
-                    "/api/auth/login"
+                    "/api/auth/login",
+                    "/actuator/**"
                 ).permitAll()
                 it.anyRequest().authenticated()
             }
