@@ -4,6 +4,7 @@ import com.example.home_recipe.controller.refrigerator.dto.UserJoinedEvent
 import com.example.home_recipe.domain.ingredient.BasicIngredients
 import com.example.home_recipe.domain.ingredient.Ingredient
 import com.example.home_recipe.domain.refrigerator.Refrigerator
+import com.example.home_recipe.domain.user.User
 import com.example.home_recipe.global.exception.BusinessException
 import com.example.home_recipe.global.response.code.IngredientCode
 import com.example.home_recipe.global.response.code.RefrigeratorCode
@@ -34,13 +35,20 @@ class RefrigeratorService(
             return user.refrigeratorExternal
         }
 
-        val defaultIngredients = findOrCreateDefaultIngredients()
-        val fridge = Refrigerator.create(defaultIngredients)
+        return createRefrigeratorFor(user)
+    }
 
-        val savedFridge = refrigeratorRepository.save(fridge)
-        user.assignRefrigerator(savedFridge)
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    fun onUserJoined(event: UserJoinedEvent) {
+        val user = userRepository.findById(event.userId)
+            .orElseThrow { BusinessException(UserCode.LOGIN_ERROR_002, HttpStatus.UNAUTHORIZED) }
 
-        return savedFridge
+        if (user.hasRefrigerator()) {
+            return
+        }
+
+        createRefrigeratorFor(user)
     }
 
     @Transactional
@@ -78,23 +86,20 @@ class RefrigeratorService(
         return fridge.useIngredientById(ingredientId)
     }
 
-    private fun findOrCreateDefaultIngredients(): List<Ingredient> {
-        return BasicIngredients.DEFAULTS.map { basic ->
-            ingredientRepository.findByCategoryAndName(basic.category, basic.name)
-                ?: ingredientRepository.save(basic.toEntity())
-        }
-    }
-
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
-    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
-    fun onUserJoined(event: UserJoinedEvent) {
-        val user = userRepository.findById(event.userId)
-            .orElseThrow { BusinessException(UserCode.LOGIN_ERROR_002, HttpStatus.UNAUTHORIZED) }
-
+    private fun createRefrigeratorFor(user: User): Refrigerator {
         val defaultIngredients = findOrCreateDefaultIngredients()
         val fridge = Refrigerator.create(defaultIngredients)
 
         val savedFridge = refrigeratorRepository.save(fridge)
         user.assignRefrigerator(savedFridge)
+
+        return savedFridge
+    }
+
+    private fun findOrCreateDefaultIngredients(): List<Ingredient> {
+        return BasicIngredients.DEFAULTS.map { basic ->
+            ingredientRepository.findByCategoryAndName(basic.category, basic.name)
+                ?: ingredientRepository.save(basic.toEntity())
+        }
     }
 }
