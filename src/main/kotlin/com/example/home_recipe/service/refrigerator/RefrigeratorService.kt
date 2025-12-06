@@ -1,7 +1,10 @@
 package com.example.home_recipe.service.refrigerator
 
 import com.example.home_recipe.controller.refrigerator.dto.UserJoinedEvent
+import com.example.home_recipe.domain.ingredient.BasicIngredients
+import com.example.home_recipe.domain.ingredient.Ingredient
 import com.example.home_recipe.domain.refrigerator.Refrigerator
+import com.example.home_recipe.domain.user.User
 import com.example.home_recipe.global.exception.BusinessException
 import com.example.home_recipe.global.response.code.IngredientCode
 import com.example.home_recipe.global.response.code.RefrigeratorCode
@@ -11,6 +14,7 @@ import com.example.home_recipe.repository.RefrigeratorRepository
 import com.example.home_recipe.repository.UserRepository
 import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Propagation
 import org.springframework.transaction.annotation.Transactional
 import org.springframework.transaction.event.TransactionPhase
 import org.springframework.transaction.event.TransactionalEventListener
@@ -19,7 +23,7 @@ import org.springframework.transaction.event.TransactionalEventListener
 class RefrigeratorService(
     private val refrigeratorRepository: RefrigeratorRepository,
     private val ingredientRepository: IngredientRepository,
-    private val userRepository: UserRepository
+    private val userRepository: UserRepository,
 ) {
     @Transactional
     fun createForUser(email: String): Refrigerator {
@@ -30,9 +34,20 @@ class RefrigeratorService(
             return user.refrigeratorExternal
         }
 
-        val fridge = refrigeratorRepository.save(Refrigerator.create())
-        user.assignRefrigerator(fridge)
-        return fridge
+        return createRefrigeratorFor(user)
+    }
+
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    fun onUserJoined(event: UserJoinedEvent) {
+        val user = userRepository.findById(event.userId)
+            .orElseThrow { BusinessException(UserCode.LOGIN_ERROR_002, HttpStatus.UNAUTHORIZED) }
+
+        if (user.hasRefrigerator()) {
+            return
+        }
+
+        createRefrigeratorFor(user)
     }
 
     @Transactional
@@ -70,13 +85,20 @@ class RefrigeratorService(
         return fridge.useIngredientById(ingredientId)
     }
 
-    @Transactional
-    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
-    fun onUserJoined(event: UserJoinedEvent) {
-        val user = userRepository.findById(event.userId)
-            .orElseThrow { BusinessException(UserCode.LOGIN_ERROR_002, HttpStatus.UNAUTHORIZED) }
+    private fun createRefrigeratorFor(user: User): Refrigerator {
+        val defaultIngredients = findOrCreateDefaultIngredients()
+        val fridge = Refrigerator.create(defaultIngredients)
 
-        val fridge = refrigeratorRepository.save(Refrigerator.create())
-        user.assignRefrigerator(fridge)
+        val savedFridge = refrigeratorRepository.save(fridge)
+        user.assignRefrigerator(savedFridge)
+
+        return savedFridge
+    }
+
+    private fun findOrCreateDefaultIngredients(): List<Ingredient> {
+        return BasicIngredients.DEFAULTS.map { basic ->
+            ingredientRepository.findByCategoryAndName(basic.category, basic.name)
+                ?: ingredientRepository.save(basic.toEntity())
+        }
     }
 }
