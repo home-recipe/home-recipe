@@ -66,7 +66,7 @@ class UserControllerTest {
 
         // when & then
         mockMvc.perform(
-            get("/api/user/email")
+            post("/api/user/email")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(toJson(request))
         )
@@ -149,7 +149,7 @@ class UserControllerTest {
 
         // when & then
         mockMvc.perform(
-            get("/api/user/email")
+            post("/api/user/email")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(toJson(request))
         )
