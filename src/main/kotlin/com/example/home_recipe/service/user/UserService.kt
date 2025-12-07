@@ -1,5 +1,6 @@
 package com.example.home_recipe.service.user
 
+import com.example.home_recipe.controller.refrigerator.dto.UserJoinedEvent
 import com.example.home_recipe.controller.user.dto.request.EmailRequest
 import com.example.home_recipe.controller.user.dto.request.JoinRequest
 import com.example.home_recipe.controller.user.dto.response.JoinResponse
@@ -9,6 +10,8 @@ import com.example.home_recipe.domain.user.User
 import com.example.home_recipe.global.exception.BusinessException
 import com.example.home_recipe.global.response.code.UserCode
 import com.example.home_recipe.repository.UserRepository
+import jakarta.transaction.Transactional
+import org.springframework.context.ApplicationEventPublisher
 import org.springframework.http.HttpStatus
 import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.stereotype.Service
@@ -17,27 +20,35 @@ import org.springframework.stereotype.Service
 class UserService(
     private val userRepository: UserRepository,
     private val passwordEncoder: PasswordEncoder,
+    private val eventPublisher: ApplicationEventPublisher,
 ) {
 
+    @Transactional
     fun join(request: JoinRequest): JoinResponse {
         val email = request.email
         val encryptedPassword = passwordEncoder.encode(request.password)
         val name = request.name
 
         if (userRepository.existsByEmail(email)) {
-            throw BusinessException(UserCode.SIGNUP_ERROR_005, HttpStatus.CONFLICT)
+            throw BusinessException(UserCode.SIGNUP_ERROR_005, HttpStatus.BAD_REQUEST)
         }
 
-        return UserResponseAssembler.toJoinResponse(
-            userRepository.save(
-                User(
-                    password = encryptedPassword,
-                    name = name,
-                    email = email,
-                    role = Role.USER
-                )
+        val savedUser = userRepository.save(
+            User(
+                password = encryptedPassword,
+                name = name,
+                email = email,
+                role = Role.USER
             )
         )
+
+        eventPublisher.publishEvent(
+            UserJoinedEvent(
+                userId = savedUser.id!!,
+                email = savedUser.email
+            )
+        )
+        return UserResponseAssembler.toJoinResponse(savedUser)
     }
 
     fun validateEmail(request : EmailRequest) {
