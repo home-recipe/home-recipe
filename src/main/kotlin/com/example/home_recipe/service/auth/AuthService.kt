@@ -37,6 +37,7 @@ class AuthService(
         }
     }
 
+    @Transactional
     fun reissueAccessToken(email: String): AccessTokenResponse {
         val isExistUser = userService.isExistUser(email)
         if(!isExistUser) {
@@ -49,7 +50,7 @@ class AuthService(
     @Transactional
     fun logout(email: String) {
         val user = userService.getUser(email)
-        val refreshToken = tokenService.getRefreshTokenByUserEmail(email)
+        val refreshToken = tokenService.getRefreshTokenByUser(user)
         tokenService.deleteRefreshToken(refreshToken)
     }
 }
