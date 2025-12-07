@@ -11,11 +11,18 @@ import org.springframework.stereotype.Component
 
 @Component
 class UnauthorizedHandler : AuthenticationEntryPoint {
+
+    companion object {
+        const val CONTENT_TYPE = "application/json;charset=UTF-8"
+    }
     override fun commence(
         request: HttpServletRequest,
         response: HttpServletResponse,
         authException: AuthenticationException
     ) {
-        throw BusinessException(AuthCode.AUTH_INVALID_TOKEN, HttpStatus.UNAUTHORIZED)
+        response.status = HttpServletResponse.SC_UNAUTHORIZED
+        response.contentType = CONTENT_TYPE
+        val json = """{"message": "${AuthCode.AUTH_INVALID_TOKEN.message}"}"""
+        response.writer.write(json)
     }
 }

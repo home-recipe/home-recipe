@@ -11,11 +11,20 @@ import org.springframework.stereotype.Component
 
 @Component
 class ForbiddenHandler : AccessDeniedHandler {
+
+    companion object {
+        const val CONTENT_TYPE = "application/json;charset=UTF-8"
+    }
+
     override fun handle(
         request: HttpServletRequest,
         response: HttpServletResponse,
         accessDeniedException: AccessDeniedException
     ) {
-        throw BusinessException(AuthCode.AUTH_FORBIDDEN, HttpStatus.FORBIDDEN)
+        response.status = HttpServletResponse.SC_FORBIDDEN
+        response.contentType = CONTENT_TYPE
+
+        val json = """{"message": "${AuthCode.AUTH_FORBIDDEN.message}"}"""
+        response.writer.write(json)
     }
 }
