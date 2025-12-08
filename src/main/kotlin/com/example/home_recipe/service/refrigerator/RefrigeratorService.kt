@@ -70,7 +70,6 @@ class RefrigeratorService(
         return fridge.useIngredientById(ingredientId)
     }
 
-    @Transactional
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     fun onUserJoined(event: UserJoinedEvent) {
         val user = userRepository.findById(event.userId)
