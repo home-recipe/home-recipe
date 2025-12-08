@@ -15,3 +15,29 @@ jwt:
   secret: ${JWT_SECRET}
   access-expiration: ${JWT_ACCESS_EXPIRATION}
   refresh-expiration: ${JWT_REFRESH_EXPIRATION}
+
+#actuator
+management:
+  endpoints:
+    jmx:
+      exposure:
+        include:
+          - health
+          - info
+          - prometheus
+          - metrics
+    web:
+      base-path: /actuator
+      exposure:
+        include:
+          - health
+          - info
+          - prometheus
+          - metrics
+        exclude: []
+
+  endpoint:
+    health:
+      show-details: always
+    prometheus:
+      enabled: true
