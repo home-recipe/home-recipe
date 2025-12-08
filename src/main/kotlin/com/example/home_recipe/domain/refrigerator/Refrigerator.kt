@@ -24,7 +24,10 @@ class Refrigerator protected constructor() {
     val ingredients: MutableSet<Ingredient> = mutableSetOf()
 
     companion object {
-        fun create(): Refrigerator = Refrigerator()
+        fun create(defaultIngredients: Collection<Ingredient> = emptyList()): Refrigerator =
+            Refrigerator().apply {
+                defaultIngredients.forEach(::addIngredient)
+            }
     }
 
     fun addIngredient(ingredient: Ingredient): Boolean =
