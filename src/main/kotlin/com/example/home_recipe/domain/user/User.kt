@@ -53,6 +53,8 @@ class User(
 
     fun hasRefrigerator(): Boolean = refrigerator != null
 
+    fun ingredientNames(): List<String> = refrigerator?.ingredientNames().orEmpty()
+
     val refrigeratorExternal: Refrigerator
         get() = refrigerator
             ?: throw IllegalStateException(
