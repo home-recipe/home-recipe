@@ -29,4 +29,11 @@ object RecommendationPrompt {
           ]
         }
         """.trimIndent()
+
+    fun userPrompt(ingredients: List<String>): String {
+        return """
+            [사용자 냉장고 자료 목록]
+            ${ingredients.joinToString {"\n"}}
+        """.trimIndent()
+    }
 }
