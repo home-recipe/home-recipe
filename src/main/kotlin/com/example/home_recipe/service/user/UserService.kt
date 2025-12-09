@@ -4,6 +4,7 @@ import com.example.home_recipe.controller.refrigerator.dto.UserJoinedEvent
 import com.example.home_recipe.controller.user.dto.request.JoinRequest
 import com.example.home_recipe.controller.user.dto.response.JoinResponse
 import com.example.home_recipe.controller.user.dto.response.UserResponseAssembler
+import com.example.home_recipe.domain.ingredient.Ingredient
 import com.example.home_recipe.domain.user.Role
 import com.example.home_recipe.domain.user.User
 import com.example.home_recipe.global.exception.BusinessException
@@ -51,6 +52,11 @@ class UserService(
         return UserResponseAssembler.toJoinResponse(
             userRepository.save(savedUser)
         )
+    }
+
+    fun getAllIngredientsOfUser(email: String) : List<String> {
+        val user = userRepository.findUserWithIngredientsByEmail(email)
+        return user.ingredientNames()
     }
 
     fun getUser(email: String): User {

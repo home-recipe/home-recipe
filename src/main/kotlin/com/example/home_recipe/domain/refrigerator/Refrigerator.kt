@@ -41,6 +41,9 @@ class Refrigerator protected constructor() {
         return ingredients.remove(target)
     }
 
+    fun ingredientNames(): List<String> =
+        ingredients.map { it.name }
+
     fun hasIngredient(ingredient: Ingredient): Boolean =
         ingredient in ingredients
 }
