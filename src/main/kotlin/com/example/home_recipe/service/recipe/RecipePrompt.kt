@@ -51,20 +51,10 @@ object RecipePrompt {
         }
         """.trimIndent()
 
-    fun userPrompt(input: String): String {
+    fun userPrompt(ingredients: List<String>): String {
         return """
-            ${"위 재료만 사용해서 만들 수 있는 레시피를 생성해줘."}
-            ${"만들 수 있는 레시피가 없다면 recipes 필드를 빈 배열([])로 반환해줘."}
             [사용자 냉장고 자료 목록]
-            ${input}
+            ${ingredients.joinToString {"\n"}}
         """.trimIndent()
     }
-
-//    fun userPrompt(ingredients: List<String>, request: String): String {
-//        return """
-//            [사용자 냉장고 자료 목록]
-//            ${ingredients.joinToString {"\n"}}
-//            ${request.ifBlank {"위 재료만 사용해서 만들 수 있는 레시피를 생성해줘."}}
-//        """.trimIndent()
-//    }
 }
