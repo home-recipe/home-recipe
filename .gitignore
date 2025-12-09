@@ -44,3 +44,4 @@ out/
 
 ### test yml ###
 application-test.yml
+application-local.yml
