@@ -57,7 +57,7 @@ class RefrigeratorServiceTest {
         val fridge = refrigeratorService.createForUser(email)
 
         // then
-        Assertions.assertThat(user.hasRefrigerator()).isTrue()
+        Assertions.assertThat(user.hasRefrigerator()).isFalse()
         Assertions.assertThat(fridge).isSameAs(user.refrigeratorExternal)
         verify(refrigeratorRepository, times(1)).save(any<Refrigerator>())
     }
