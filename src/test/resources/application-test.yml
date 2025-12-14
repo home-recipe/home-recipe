@@ -1,3 +1,19 @@
-JWT_SECRET: test-secret
+spring:
+  datasource:
+    url: jdbc:h2:mem:testdb;MODE=MySQL;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
+
+  jpa:
+    hibernate:
+      ddl-auto: create
+    properties:
+      hibernate:
+        format_sql: true
+    open-in-view: false
+
 jwt:
-  secret: test-secret
+  secret: homerecipealkfjlqwalnfjkehfljqlkjl1j2lk312jl
+  access-expiration: 3600000
+  refresh-expiration: 604800000

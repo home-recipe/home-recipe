@@ -1,5 +1,6 @@
 package com.example.home_recipe.service.user
 
+import com.example.home_recipe.controller.user.dto.request.EmailRequest
 import com.example.home_recipe.controller.user.dto.request.JoinRequest
 import com.example.home_recipe.global.exception.BusinessException
 import com.example.home_recipe.global.response.code.UserCode
@@ -56,17 +57,27 @@ class UserServiceTest {
         Assertions.assertThat(response.email).isEqualTo(EMAIL)
     }
 
+    @Test
+    @DisplayName("등록된 email이 없을 경우 회원가입 성공")
+    fun email이_존재할_경우_회원가입_성공() {
+        //given
+        val request = EmailRequest(EMAIL)
+
+        //when & then
+        Assertions.assertThatCode { userService.validateEmail(request) }.doesNotThrowAnyException()
+    }
+
     ///////예외 테스트
     @Test
     @DisplayName("email이 존재할 경우 회원가입 실패")
     fun email이_존재할_경우_회원가입_실패() {
         //given
         userService.join(JoinRequest(NAME, PASSWORD, EMAIL))
-        val joinRequest = JoinRequest(NAME, PASSWORD, EMAIL)
+        val request = EmailRequest(EMAIL)
 
         // when & then
         assertThatThrownBy {
-            userService.join(joinRequest)
+            userService.validateEmail(request)
         }
             .isInstanceOf(BusinessException::class.java)
             .hasMessageContaining(UserCode.SIGNUP_ERROR_005.message)

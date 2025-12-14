@@ -1,6 +1,7 @@
 package com.example.home_recipe.service.user
 
 import com.example.home_recipe.controller.refrigerator.dto.UserJoinedEvent
+import com.example.home_recipe.controller.user.dto.request.EmailRequest
 import com.example.home_recipe.controller.user.dto.request.JoinRequest
 import com.example.home_recipe.controller.user.dto.response.JoinResponse
 import com.example.home_recipe.controller.user.dto.response.UserResponseAssembler
@@ -47,10 +48,15 @@ class UserService(
                 email = savedUser.email
             )
         )
+        return UserResponseAssembler.toJoinResponse(savedUser)
+    }
 
-        return UserResponseAssembler.toJoinResponse(
-            userRepository.save(savedUser)
-        )
+    fun validateEmail(request : EmailRequest) {
+        val email = request.email
+
+        if (userRepository.existsByEmail(email)) {
+            throw BusinessException(UserCode.SIGNUP_ERROR_005, HttpStatus.CONFLICT)
+        }
     }
 
     fun getUser(email: String): User {

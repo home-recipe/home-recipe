@@ -6,15 +6,17 @@ import com.example.home_recipe.global.exception.BusinessException
 import com.example.home_recipe.global.response.code.AuthCode
 import com.example.home_recipe.global.response.code.UserCode
 import com.example.home_recipe.repository.RefreshTokenRepository
+import jakarta.transaction.Transactional
 import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Service
 
 @Service
+@Transactional
 class TokenService(
-    private val tokenRepository: RefreshTokenRepository
+    private val tokenRepository: RefreshTokenRepository,
 ) {
     fun synchronizeRefreshToken(user: User, refreshToken: String) {
-        val existingToken: RefreshToken? = tokenRepository.findByUser_Email(user.email).orElse(null)
+        val existingToken: RefreshToken? = tokenRepository.findByUser(user).orElse(null)
 
         if (existingToken != null) {
             existingToken.updateRefreshToken(refreshToken)
@@ -30,9 +32,9 @@ class TokenService(
             }
     }
 
-    fun getRefreshTokenByUserEmail(email: String): RefreshToken {
-        return tokenRepository.findByUser_Email(email)
-            .orElseThrow{
+    fun getRefreshTokenByUser(user: User): RefreshToken {
+        return tokenRepository.findByUser(user)
+            .orElseThrow {
                 BusinessException(UserCode.LOGIN_ERROR_002, HttpStatus.UNAUTHORIZED)
             }
     }
