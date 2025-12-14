@@ -12,7 +12,7 @@ class RefreshToken(
     val id: Long? = null,
 
     @OneToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "member_id")
+    @JoinColumn(name = "user_id")
     val user: User,
 
     @Column(nullable = false)

@@ -37,19 +37,6 @@ class RefrigeratorService(
         return createRefrigeratorFor(user)
     }
 
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
-    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
-    fun onUserJoined(event: UserJoinedEvent) {
-        val user = userRepository.findById(event.userId)
-            .orElseThrow { BusinessException(UserCode.LOGIN_ERROR_002, HttpStatus.UNAUTHORIZED) }
-
-        if (user.hasRefrigerator()) {
-            return
-        }
-
-        createRefrigeratorFor(user)
-    }
-
     @Transactional
     fun addIngredient(email: String, ingredientId: Long): Boolean {
         val user = userRepository.findByEmail(email)
@@ -85,13 +72,12 @@ class RefrigeratorService(
         return fridge.useIngredientById(ingredientId)
     }
 
+
     private fun createRefrigeratorFor(user: User): Refrigerator {
         val defaultIngredients = findOrCreateDefaultIngredients()
         val fridge = Refrigerator.create(defaultIngredients)
-
         val savedFridge = refrigeratorRepository.save(fridge)
         user.assignRefrigerator(savedFridge)
-
         return savedFridge
     }
 
