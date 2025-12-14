@@ -12,6 +12,7 @@ import com.example.home_recipe.repository.IngredientRepository
 import com.example.home_recipe.repository.RefrigeratorRepository
 import com.example.home_recipe.repository.UserRepository
 import org.assertj.core.api.Assertions
+import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
@@ -20,6 +21,8 @@ import org.mockito.InjectMocks
 import org.mockito.Mock
 import org.mockito.kotlin.any
 import org.mockito.kotlin.whenever
+import org.mockito.kotlin.verify
+import org.mockito.kotlin.times
 import org.mockito.junit.jupiter.MockitoExtension
 import org.mockito.Mockito.*
 import java.util.*
@@ -47,19 +50,29 @@ class RefrigeratorServiceTest {
         // given
         val email = "test@example.com"
         val user = User(email = email, password = "encoded", name = "name")
-        whenever(userRepository.findByEmail(email)).thenReturn(Optional.of(user))
 
-        doAnswer { inv -> inv.getArgument<Refrigerator>(0) }
-            .whenever(refrigeratorRepository)
-            .save(any<Refrigerator>())
+        whenever(userRepository.findByEmail(email))
+            .thenReturn(Optional.of(user))
+        whenever(ingredientRepository.findByCategoryAndName(any(), any()))
+            .thenReturn(null)
+        whenever(ingredientRepository.save(any<Ingredient>()))
+            .thenAnswer { invocation ->
+                invocation.getArgument<Ingredient>(0)
+            }
+        whenever(refrigeratorRepository.save(any<Refrigerator>()))
+            .thenAnswer { invocation ->
+                invocation.getArgument<Refrigerator>(0)
+            }
 
         // when
         val fridge = refrigeratorService.createForUser(email)
 
         // then
-        Assertions.assertThat(user.hasRefrigerator()).isFalse()
-        Assertions.assertThat(fridge).isSameAs(user.refrigeratorExternal)
+        assertThat(user.hasRefrigerator()).isTrue()
+        assertThat(fridge).isSameAs(user.refrigeratorExternal)
+
         verify(refrigeratorRepository, times(1)).save(any<Refrigerator>())
+        verify(ingredientRepository, atLeastOnce()).save(any<Ingredient>())
     }
 
     @Test

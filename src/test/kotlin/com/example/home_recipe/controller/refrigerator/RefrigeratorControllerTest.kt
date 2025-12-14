@@ -6,6 +6,7 @@ import com.example.home_recipe.domain.user.User
 import com.example.home_recipe.repository.IngredientRepository
 import com.example.home_recipe.repository.RefrigeratorRepository
 import com.example.home_recipe.repository.UserRepository
+import jakarta.transaction.Transactional
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
@@ -18,9 +19,12 @@ import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.*
 
+import org.springframework.test.context.ActiveProfiles;
+
 @SpringBootTest
 @AutoConfigureMockMvc
-@AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.ANY)
+@ActiveProfiles("test")
+@Transactional
 class RefrigeratorControllerTest {
 
     @Autowired lateinit var mockMvc: MockMvc
@@ -38,7 +42,9 @@ class RefrigeratorControllerTest {
         // when & then
         mockMvc.perform(post("/refrigerator").with(user(email)))
             .andExpect(status().isCreated)
-            .andExpect(jsonPath("$.success").value(true))
+            .andExpect(jsonPath("$.code").value(201))  // 옵션: 전체 코드 체크
+            .andExpect(jsonPath("$.response.code").value("REFRIGERATOR_CREATE_SUCCESS"))
+            .andExpect(jsonPath("$.response.data").value(true))
 
         // then DB 확인
         val u = userRepository.findByEmail(email).orElseThrow()
