@@ -18,9 +18,11 @@ import org.mockito.junit.jupiter.MockitoExtension
 import org.mockito.kotlin.any
 import org.mockito.kotlin.doAnswer
 import org.mockito.kotlin.whenever
+import org.springframework.test.context.ActiveProfiles
 import java.util.*
 
 @ExtendWith(MockitoExtension::class)
+@ActiveProfiles("test")
 class IngredientServiceTest {
 
     @Mock lateinit var ingredientRepository: IngredientRepository

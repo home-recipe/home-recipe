@@ -1,18 +1,19 @@
 package com.example.home_recipe.service.refrigerator
 
+import com.example.home_recipe.controller.refrigerator.dto.UserJoinedEvent
 import com.example.home_recipe.domain.ingredient.Ingredient
 import com.example.home_recipe.domain.refrigerator.Refrigerator
 import com.example.home_recipe.domain.user.User
+import com.example.home_recipe.global.exception.BusinessException
 import com.example.home_recipe.repository.IngredientRepository
 import com.example.home_recipe.repository.RefreshTokenRepository
 import com.example.home_recipe.repository.RefrigeratorRepository
 import com.example.home_recipe.repository.UserRepository
+import jakarta.persistence.EntityManager
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
-import org.mockito.InjectMocks
-import org.mockito.Mock
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.autoconfigure.domain.EntityScan
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase
@@ -21,9 +22,19 @@ import org.springframework.boot.test.context.TestConfiguration
 import org.springframework.context.annotation.Import
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories
 
-@DataJpaTest
-@AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.ANY)
+import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.bean.override.mockito.MockitoBean
+import org.springframework.transaction.annotation.Propagation
+import org.springframework.transaction.annotation.Transactional
+
+@DataJpaTest(
+    properties = [
+        "spring.jpa.hibernate.ddl-auto=create"
+    ]
+)
+@AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
 @Import(RefrigeratorService::class, TestEventInvoker::class, RefrigeratorEventJpaSliceTest.JpaTestConfig::class)
+@ActiveProfiles("test")
 class RefrigeratorEventJpaSliceTest {
     @TestConfiguration
     @EnableJpaRepositories(basePackageClasses = [
@@ -38,18 +49,26 @@ class RefrigeratorEventJpaSliceTest {
     ])
     class JpaTestConfig
 
+    @Autowired lateinit var refrigeratorService: RefrigeratorService
+
     @Autowired lateinit var userRepository: UserRepository
     @Autowired lateinit var refrigeratorRepository: RefrigeratorRepository
     @Autowired lateinit var invoker: TestEventInvoker
 
-    @Mock
+    @MockitoBean
     lateinit var refreshTokenRepository: RefreshTokenRepository
 
+    @Autowired lateinit var em: EntityManager
+
     @Test
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
     @DisplayName("UserJoinedEvent 처리로 냉장고 생성 및 할당")
     fun userJoinedEvent_생성() {
         val user = userRepository.save(User(email = "e@e.com", password = "pw", name = "name"))
         invoker.publishUserJoinedAndCommit(user.id!!, user.email)
+
+        em.clear()
+
         val reloaded = userRepository.findById(user.id!!).get()
         assertThat(reloaded.hasRefrigerator()).isTrue()
         val fridgeId = reloaded.refrigeratorExternal.id!!
@@ -81,10 +100,11 @@ class RefrigeratorEventJpaSliceTest {
     fun userJoinedEvent_유저없음() {
         // given
         val notExists = 999_999L
+        val event = UserJoinedEvent(notExists, "none@example.com")
 
         // when & then
         assertThatThrownBy {
-            invoker.publishUserJoinedAndCommit(notExists, "none@example.com")
-        }.isInstanceOf(IllegalArgumentException::class.java)
+            refrigeratorService.onUserJoined(event)
+        }.isInstanceOf(BusinessException::class.java)
     }
 }
