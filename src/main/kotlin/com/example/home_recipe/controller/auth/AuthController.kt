@@ -3,6 +3,7 @@ package com.example.home_recipe.controller.auth
 import com.example.home_recipe.controller.auth.dto.response.LoginResponse
 import com.example.home_recipe.controller.auth.dto.response.AccessTokenResponse
 import com.example.home_recipe.controller.user.dto.request.LoginRequest
+import com.example.home_recipe.controller.user.dto.response.EmailPrincipal
 import com.example.home_recipe.global.response.ApiResponse
 import com.example.home_recipe.global.response.code.AuthCode
 import com.example.home_recipe.service.auth.AuthService
@@ -27,14 +28,14 @@ class AuthController(
     }
 
     @PostMapping("/logout")
-    fun logout(@AuthenticationPrincipal email: String): ResponseEntity<ApiResponse<Unit>> {
-        return ApiResponse.success(authService.logout(email), AuthCode.AUTH_LOGOUT_SUCCESS, HttpStatus.OK)
+    fun logout(@AuthenticationPrincipal principal : EmailPrincipal): ResponseEntity<ApiResponse<Unit>> {
+        return ApiResponse.success(authService.logout(principal.email), AuthCode.AUTH_LOGOUT_SUCCESS, HttpStatus.OK)
     }
 
     @PostMapping("/reissue")
-    fun reissueAccessToken(@AuthenticationPrincipal email: String): ResponseEntity<ApiResponse<AccessTokenResponse>> {
+    fun reissueAccessToken(@AuthenticationPrincipal principal : EmailPrincipal): ResponseEntity<ApiResponse<AccessTokenResponse>> {
         return ApiResponse.success(
-            authService.reissueAccessToken(email),
+            authService.reissueAccessToken(principal.email),
             AuthCode.AUTH_REISSUE_SUCCESS,
             HttpStatus.OK
         )
