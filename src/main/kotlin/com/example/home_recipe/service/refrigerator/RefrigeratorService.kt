@@ -85,6 +85,22 @@ class RefrigeratorService(
         return fridge.useIngredientById(ingredientId)
     }
 
+    @Transactional(readOnly = true)
+    fun getAllIngredients(email: String): List<String> {
+        val user = userRepository.findByEmailWithRefrigerator(email)
+            .orElseThrow { BusinessException(UserCode.LOGIN_ERROR_002, HttpStatus.UNAUTHORIZED) }
+
+        val refrigerator = refrigeratorRepository
+            .findByIdWithIngredients(requireNotNull(user.refrigeratorExternal.id))
+            .orElseThrow {
+                BusinessException(
+                    RefrigeratorCode.REFRIGERATOR_ERROR_004,
+                    HttpStatus.INTERNAL_SERVER_ERROR
+                )
+            }
+        return refrigerator.ingredientNames()
+    }
+
     private fun createRefrigeratorFor(user: User): Refrigerator {
         val defaultIngredients = findOrCreateDefaultIngredients()
         val fridge = Refrigerator.create(defaultIngredients)

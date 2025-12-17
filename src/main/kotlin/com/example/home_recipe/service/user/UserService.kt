@@ -54,11 +54,6 @@ class UserService(
         )
     }
 
-    fun getAllIngredientsOfUser(email: String) : List<String> {
-        val user = userRepository.findUserWithIngredientsByEmail(email)
-        return user.ingredientNames()
-    }
-
     fun getUser(email: String): User {
         return userRepository.findByEmail(email)
             .orElseThrow { BusinessException(UserCode.LOGIN_ERROR_002, HttpStatus.UNAUTHORIZED) }
