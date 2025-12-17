@@ -1,6 +1,7 @@
 package com.example.home_recipe.service.recipe
 
 import com.example.home_recipe.controller.recipe.response.RecipesResponse
+import com.example.home_recipe.service.refrigerator.RefrigeratorService
 import com.example.home_recipe.service.user.UserService
 import com.openai.client.okhttp.OpenAIOkHttpClientAsync
 import com.openai.models.ChatModel
@@ -11,7 +12,7 @@ import org.springframework.stereotype.Service
 @Service
 class RecipeService(
     @Value("\${openai.api-key}") val apiKey: String,
-    val userService: UserService
+    val refrigeratorService: RefrigeratorService
 ) {
     val client = OpenAIOkHttpClientAsync.builder()
         .apiKey(apiKey)
@@ -20,7 +21,7 @@ class RecipeService(
     fun chat(email: String): RecipesResponse {
         val params = ChatCompletionCreateParams.builder()
             .addSystemMessage(RecipePrompt.SYSTEM_PROMPT)
-            .addUserMessage(RecipePrompt.userPrompt(userService.getAllIngredientsOfUser(email)))
+            .addUserMessage(RecipePrompt.userPrompt(refrigeratorService.getAllIngredients(email)))
             .model(ChatModel.GPT_5_MINI)
             .responseFormat(RecipesResponse::class.java)
             .build()
