@@ -1,5 +1,6 @@
 package com.example.home_recipe.controller.refrigerator
 
+import com.example.home_recipe.controller.user.dto.response.EmailPrincipal
 import com.example.home_recipe.domain.ingredient.Ingredient
 import com.example.home_recipe.domain.ingredient.IngredientCategory
 import com.example.home_recipe.domain.user.User
@@ -13,14 +14,19 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc
 import org.springframework.boot.test.context.SpringBootTest
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
+import org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.authentication
 import org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user
+import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.*
+import org.springframework.transaction.annotation.Transactional
 
 @SpringBootTest
 @AutoConfigureMockMvc
-@AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.ANY)
+@ActiveProfiles("test")
+@Transactional
 class RefrigeratorControllerTest {
 
     @Autowired lateinit var mockMvc: MockMvc
@@ -33,12 +39,19 @@ class RefrigeratorControllerTest {
     fun create_whenAbsent_created() {
         // given
         val email = "create1@example.com"
+        val principal = EmailPrincipal(email)
         userRepository.save(User(email = email, password = "pw", name = "me"))
 
+        val auth = UsernamePasswordAuthenticationToken(
+            principal,
+            null,
+            emptyList()
+        )
+
         // when & then
-        mockMvc.perform(post("/refrigerator").with(user(email)))
+        mockMvc.perform(post("/refrigerator").with(authentication(auth)))
             .andExpect(status().isCreated)
-            .andExpect(jsonPath("$.success").value(true))
+            .andExpect(jsonPath("$.response.data").value(true))
 
         // then DB 확인
         val u = userRepository.findByEmail(email).orElseThrow()
@@ -49,12 +62,19 @@ class RefrigeratorControllerTest {
     @DisplayName("PUT /refrigerator/ingredient/{id} - 재료 추가")
     fun addIngredient_success() {
         val email = "add1@example.com"
+        val principal = EmailPrincipal(email)
+
+        val auth = UsernamePasswordAuthenticationToken(
+            principal,
+            null,
+            emptyList()
+        )
         userRepository.save(User(email = email, password = "pw", name = "me"))
-        mockMvc.perform(post("/refrigerator").with(user(email))).andExpect(status().isCreated)
+        mockMvc.perform(post("/refrigerator").with(authentication(auth))).andExpect(status().isCreated)
 
         val ing = ingredientRepository.save(Ingredient(IngredientCategory.VEGETABLE, "양파"))
 
-        mockMvc.perform(put("/refrigerator/ingredient/{id}", ing.id!!).with(user(email)))
+        mockMvc.perform(put("/refrigerator/ingredient/{id}", ing.id!!).with(authentication(auth)))
             .andExpect(status().isOk)
 
         val u = userRepository.findByEmail(email).orElseThrow()
@@ -65,14 +85,21 @@ class RefrigeratorControllerTest {
     @DisplayName("DELETE /refrigerator/ingredient/{id} - 재료 사용")
     fun useIngredient_success() {
         val email = "use1@example.com"
+        val principal = EmailPrincipal(email)
+
+        val auth = UsernamePasswordAuthenticationToken(
+            principal,
+            null,
+            emptyList()
+        )
         userRepository.save(User(email = email, password = "pw", name = "me"))
-        mockMvc.perform(post("/refrigerator").with(user(email))).andExpect(status().isCreated)
+        mockMvc.perform(post("/refrigerator").with(authentication(auth))).andExpect(status().isCreated)
 
         val ing = ingredientRepository.save(Ingredient(IngredientCategory.VEGETABLE, "당근"))
-        mockMvc.perform(put("/refrigerator/ingredient/{id}", ing.id!!).with(user(email)))
+        mockMvc.perform(put("/refrigerator/ingredient/{id}", ing.id!!).with(authentication(auth)))
             .andExpect(status().isOk)
 
-        mockMvc.perform(delete("/refrigerator/ingredient/{id}", ing.id!!).with(user(email)))
+        mockMvc.perform(delete("/refrigerator/ingredient/{id}", ing.id!!).with(authentication(auth)))
             .andExpect(status().isOk)
 
         val u = userRepository.findByEmail(email).orElseThrow()
