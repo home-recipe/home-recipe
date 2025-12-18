@@ -104,10 +104,8 @@ class RefrigeratorService(
     private fun createRefrigeratorFor(user: User): Refrigerator {
         val defaultIngredients = findOrCreateDefaultIngredients()
         val fridge = Refrigerator.create(defaultIngredients)
-
         val savedFridge = refrigeratorRepository.save(fridge)
         user.assignRefrigerator(savedFridge)
-
         return savedFridge
     }
 

@@ -1,22 +1,26 @@
 package com.example.home_recipe.service.refrigerator
 
 import com.example.home_recipe.controller.refrigerator.dto.UserJoinedEvent
-import jakarta.transaction.Transactional
 import org.springframework.context.ApplicationEventPublisher
 import org.springframework.stereotype.Service
+import org.springframework.transaction.PlatformTransactionManager
+import org.springframework.transaction.TransactionDefinition
+import org.springframework.transaction.support.TransactionTemplate
 
 @Service
 class TestEventInvoker(
-    private val publisher: ApplicationEventPublisher
+    private val publisher: ApplicationEventPublisher,
+    txManager: PlatformTransactionManager,
 ) {
-    @Transactional
+    private val txTemplate = TransactionTemplate(txManager).apply {
+        propagationBehavior = TransactionDefinition.PROPAGATION_REQUIRES_NEW
+    }
+
     fun publishUserJoinedAndCommit(userId: Long, email: String) {
-        // given
         val event = UserJoinedEvent(userId = userId, email = email)
 
-        // when
-        publisher.publishEvent(event)
-
-        // then -> 커밋 시점에 리스너 동작 (BEFORE_COMMIT/AFTER_COMMIT 설정에 따라)
+        txTemplate.executeWithoutResult {
+            publisher.publishEvent(event)
+        }
     }
 }
