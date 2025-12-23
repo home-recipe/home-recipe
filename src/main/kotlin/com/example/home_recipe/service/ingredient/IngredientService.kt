@@ -51,6 +51,12 @@ class IngredientService(
 
         return IngredientResponseAssembler.toIngredientResponse(ingredient)
     }
+
+    @Transactional(readOnly = true)
+    fun findByNameContaining(name: String): List<IngredientResponse> {
+        val ingredients = ingredientRepository.findByNameContaining(name)
+        return IngredientResponseAssembler.toIngredientResponseList(ingredients)
+    }
 }
 
 

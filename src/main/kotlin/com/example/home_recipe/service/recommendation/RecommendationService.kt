@@ -21,7 +21,7 @@ class RecommendationService(
     fun chat(email: String): RecommendationsResponse {
         val params = ChatCompletionCreateParams.builder()
             .addSystemMessage(RecommendationPrompt.SYSTEM_PROMPT)
-            .addUserMessage(RecommendationPrompt.userPrompt(refrigeratorService.getAllIngredients(email)))
+            .addUserMessage(RecommendationPrompt.userPrompt(refrigeratorService.getMyIngredientNames(email)))
             .model(ChatModel.GPT_5_MINI)
             .responseFormat(RecommendationsResponse::class.java)
             .build()

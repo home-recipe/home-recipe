@@ -30,4 +30,8 @@ class RefreshToken(
     fun updateRefreshToken(refreshToken: String) {
         this.refreshToken = refreshToken
     }
+
+    fun getUserEmail() : String {
+        return user.email;
+    }
 }

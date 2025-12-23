@@ -36,7 +36,7 @@ class Refrigerator protected constructor() {
     fun useIngredient(ingredient: Ingredient): Boolean =
         ingredients.remove(ingredient)
 
-    fun useIngredientById(ingredientId: Long): Boolean {
+    fun removeIngredientById(ingredientId: Long): Boolean {
         val target = ingredients.firstOrNull { it.id == ingredientId } ?: return false
         return ingredients.remove(target)
     }

@@ -10,10 +10,11 @@ import com.example.home_recipe.service.ingredient.IngredientService
 import jakarta.validation.Valid
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
+import org.springframework.security.core.annotation.AuthenticationPrincipal
 import org.springframework.web.bind.annotation.*
 
 @RestController
-@RequestMapping("/admin/ingredients")
+@RequestMapping("/api/ingredients")
 class IngredientController(
     private val ingredientService: IngredientService
 ) {
@@ -24,8 +25,8 @@ class IngredientController(
         return ApiResponse.success(result, IngredientCode.CREATE_SUCCESS, HttpStatus.CREATED)
     }
 
-    @PostMapping("/batch") fun createAll(
-        @Valid @RequestBody request: CreateIngredientBatchRequest): ResponseEntity<ApiResponse<List<IngredientResponse>>> {
+    @PostMapping("/batch")
+    fun createAll(@Valid @RequestBody request: CreateIngredientBatchRequest): ResponseEntity<ApiResponse<List<IngredientResponse>>> {
         val result = ingredientService.createAll(request.items)
         return ApiResponse.success(result, IngredientCode.CREATE_SUCCESS, HttpStatus.CREATED)
     }
@@ -34,5 +35,11 @@ class IngredientController(
     fun update(@PathVariable id: Long, @Valid @RequestBody request: UpdateIngredientRequest): ResponseEntity<ApiResponse<IngredientResponse>> {
         val result = ingredientService.update(id, request)
         return ApiResponse.success(result, IngredientCode.UPDATE_SUCCESS, HttpStatus.OK)
+    }
+
+    @GetMapping
+    fun findByNameContaining(@RequestParam name: String) : ResponseEntity<ApiResponse<List<IngredientResponse>>> {
+        val result = ingredientService.findByNameContaining(name)
+        return ApiResponse.success(result, IngredientCode.INGREDIENT_SEARCH_SUCCESS, HttpStatus.OK)
     }
 }

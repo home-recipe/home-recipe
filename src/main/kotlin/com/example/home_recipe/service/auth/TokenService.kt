@@ -39,7 +39,8 @@ class TokenService(
             }
     }
 
-    fun deleteRefreshToken(refreshToken: RefreshToken) {
-        tokenRepository.delete(refreshToken)
+    fun deleteRefreshToken(refreshToken: String) {
+        tokenRepository.findByRefreshToken(refreshToken)
+            .ifPresent { tokenRepository.delete(it) }
     }
 }

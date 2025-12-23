@@ -1,5 +1,7 @@
 package com.example.home_recipe.service.refrigerator
 
+import com.example.home_recipe.controller.ingredient.dto.response.IngredientResponse
+import com.example.home_recipe.controller.refrigerator.dto.RefrigeratorResponse
 import com.example.home_recipe.controller.refrigerator.dto.UserJoinedEvent
 import com.example.home_recipe.domain.ingredient.BasicIngredients
 import com.example.home_recipe.domain.ingredient.Ingredient
@@ -12,6 +14,7 @@ import com.example.home_recipe.global.response.code.UserCode
 import com.example.home_recipe.repository.IngredientRepository
 import com.example.home_recipe.repository.RefrigeratorRepository
 import com.example.home_recipe.repository.UserRepository
+import org.slf4j.LoggerFactory
 import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Propagation
@@ -25,6 +28,7 @@ class RefrigeratorService(
     private val ingredientRepository: IngredientRepository,
     private val userRepository: UserRepository,
 ) {
+    private val log = LoggerFactory.getLogger(javaClass)
     @Transactional
     fun createForUser(email: String): Refrigerator {
         val user = userRepository.findByEmail(email)
@@ -72,7 +76,7 @@ class RefrigeratorService(
     }
 
     @Transactional
-    fun useIngredient(email: String, ingredientId: Long): Boolean {
+    fun removeIngredient(email: String, ingredientId: Long): Boolean {
         val user = userRepository.findByEmail(email)
             .orElseThrow { BusinessException(UserCode.LOGIN_ERROR_002, HttpStatus.UNAUTHORIZED) }
 
@@ -82,11 +86,11 @@ class RefrigeratorService(
             throw BusinessException(RefrigeratorCode.REFRIGERATOR_ERROR_004, HttpStatus.BAD_REQUEST)
         }
 
-        return fridge.useIngredientById(ingredientId)
+        return fridge.removeIngredientById(ingredientId)
     }
 
     @Transactional(readOnly = true)
-    fun getAllIngredients(email: String): List<String> {
+    fun getMyIngredients(email: String): RefrigeratorResponse {
         val user = userRepository.findByEmailWithRefrigerator(email)
             .orElseThrow { BusinessException(UserCode.LOGIN_ERROR_002, HttpStatus.UNAUTHORIZED) }
 
@@ -98,7 +102,37 @@ class RefrigeratorService(
                     HttpStatus.INTERNAL_SERVER_ERROR
                 )
             }
-        return refrigerator.ingredientNames()
+        val ingredientResponses = refrigerator.ingredients
+            .map { it.toResponse() }
+
+        return RefrigeratorResponse(
+            myRefrigerator = ingredientResponses
+        )
+    }
+
+    fun Ingredient.toResponse(): IngredientResponse =
+        IngredientResponse(
+            id = requireNotNull(this.id),
+            category = this.category,
+            name = this.name
+        )
+
+    @Transactional(readOnly = true)
+    fun getMyIngredientNames(email: String): List<String> {
+        val user = userRepository.findByEmailWithRefrigerator(email)
+            .orElseThrow { BusinessException(UserCode.LOGIN_ERROR_002, HttpStatus.UNAUTHORIZED) }
+
+        val refrigerator = refrigeratorRepository
+            .findByIdWithIngredients(requireNotNull(user.refrigeratorExternal.id))
+            .orElseThrow {
+                BusinessException(
+                    RefrigeratorCode.REFRIGERATOR_ERROR_004,
+                    HttpStatus.INTERNAL_SERVER_ERROR
+                )
+            }
+        val result =  refrigerator.ingredientNames()
+        log.info("냉장고이름조회 = {}" + result)
+        return result
     }
 
     private fun createRefrigeratorFor(user: User): Refrigerator {

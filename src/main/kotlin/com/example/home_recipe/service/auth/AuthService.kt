@@ -33,24 +33,20 @@ class AuthService(
 
     private fun checkPassword(rawPassword: String, encryptedPassword: String) {
         if (!passwordEncoder.matches(rawPassword, encryptedPassword)) {
-            throw BusinessException(UserCode.LOGIN_ERROR_003, HttpStatus.UNAUTHORIZED)
+            throw BusinessException(AuthCode.AUTH_INVALID_CREDENTIALS, HttpStatus.UNAUTHORIZED)
         }
     }
 
     @Transactional
-    fun reissueAccessToken(email: String): AccessTokenResponse {
-        val isExistUser = userService.isExistUser(email)
-        if(!isExistUser) {
-            throw BusinessException(AuthCode.AUTH_INVALID_TOKEN, HttpStatus.UNAUTHORIZED)
-        }
-        val accessToken = jwtTokenProvider.createAccessToken(email)
+    fun reissueAccessToken(refreshToken: String): AccessTokenResponse {
+        jwtTokenProvider.validateToken(refreshToken)
+        val token =  tokenService.getValidRefreshToken(refreshToken);
+        val accessToken = jwtTokenProvider.createAccessToken(token.getUserEmail())
         return AccessTokenResponse(accessToken)
     }
 
     @Transactional
-    fun logout(email: String) {
-        val user = userService.getUser(email)
-        val refreshToken = tokenService.getRefreshTokenByUser(user)
+    fun logout(refreshToken: String) {
         tokenService.deleteRefreshToken(refreshToken)
     }
 }
