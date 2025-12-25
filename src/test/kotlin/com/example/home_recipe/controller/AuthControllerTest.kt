@@ -20,6 +20,8 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.http.MediaType
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
+import org.springframework.security.oauth2.jwt.Jwt
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken
 import org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.authentication
 import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.web.servlet.MockMvc
@@ -31,7 +33,7 @@ import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
 @Transactional
-class AuthControllerTest {
+class   AuthControllerTest {
 
     @Autowired
     private lateinit var mockMvc: MockMvc
@@ -74,20 +76,26 @@ class AuthControllerTest {
     @Test
     @DisplayName("리프레시 토큰을 통해 액세스 토큰을 발급받는다.")
     fun 리프레시_토큰을_통해_엑세스_토큰을_발급받는다() {
-        //given
+        // given
         saveUser()
+        val loginResponse = extractLoginResponse()
+        val refreshToken = loginResponse.refreshToken
 
-        val principal = EmailPrincipal(EMAIL)
-        val auth = UsernamePasswordAuthenticationToken(
-            principal,
-            null,
-            emptyList()
+        val jwt = Jwt.withTokenValue(refreshToken)
+            .header("alg", "none")
+            .subject(EMAIL)
+            .claim(EMAIL, EMAIL)
+            .build()
+
+        val auth = JwtAuthenticationToken(jwt, emptyList(), EMAIL)
+
+        // when & then
+        mockMvc.perform(
+            post("/api/auth/reissue")
+                .with(authentication(auth))
         )
-
-        //when&then
-        mockMvc.perform(post("/api/auth/reissue").with(authentication(auth)))
             .andExpect(status().isOk)
-
+            .andExpect(jsonPath("$.response.data.accessToken").exists())
     }
 
     @Test
@@ -95,14 +103,16 @@ class AuthControllerTest {
     fun 로그아웃을_한다() {
         //given
         saveUser()
-        val accessToken = extractLoginResponse().accessToken
+        val loginResponse = extractLoginResponse()
+        val refreshToken = loginResponse.refreshToken
 
-        val principal = EmailPrincipal(EMAIL)
-        val auth = UsernamePasswordAuthenticationToken(
-            principal,
-            null,
-            emptyList()
-        )
+        val jwt = Jwt.withTokenValue(refreshToken)
+            .header("alg", "none")
+            .subject(EMAIL)
+            .claim(EMAIL, EMAIL)
+            .build()
+
+        val auth = JwtAuthenticationToken(jwt, emptyList(), EMAIL)
 
         //when & then
         mockMvc.perform(post("/api/auth/logout").with(authentication(auth)))
