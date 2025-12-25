@@ -1,6 +1,5 @@
 package com.example.home_recipe.controller.auth
 
-import com.example.home_recipe.controller.auth.dto.request.RefreshTokenRequest
 import com.example.home_recipe.controller.auth.dto.response.AccessTokenResponse
 import com.example.home_recipe.controller.auth.dto.response.LoginResponse
 import com.example.home_recipe.controller.user.dto.request.LoginRequest
@@ -30,12 +29,8 @@ class AuthController(
     }
 
     @PostMapping("/logout")
-    fun logout(@Valid @RequestBody refreshToken: RefreshTokenRequest): ResponseEntity<ApiResponse<Unit>> {
-        return ApiResponse.success(
-            authService.logout(refreshToken.refreshToken),
-            AuthCode.AUTH_LOGOUT_SUCCESS,
-            HttpStatus.OK
-        )
+    fun logout(authentication: Authentication): ResponseEntity<ApiResponse<Unit>> {
+        return ApiResponse.success(authService.logout(authentication.name), AuthCode.AUTH_LOGOUT_SUCCESS, HttpStatus.OK)
     }
 
     @PostMapping("/reissue")

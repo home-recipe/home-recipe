@@ -56,7 +56,7 @@ class RefrigeratorControllerTest {
         val auth = JwtAuthenticationToken(jwt, emptyList(), email)
 
         // when & then
-        mockMvc.perform(post("/refrigerator").with(authentication(auth)))
+        mockMvc.perform(post("/api/refrigerator").with(authentication(auth)))
             .andExpect(status().isCreated)
             .andExpect(jsonPath("$.response.data").value(true))
 
@@ -78,11 +78,11 @@ class RefrigeratorControllerTest {
         val auth = JwtAuthenticationToken(jwt, emptyList(), email)
 
         userRepository.save(User(email = email, password = "pw", name = "me"))
-        mockMvc.perform(post("/refrigerator").with(authentication(auth))).andExpect(status().isCreated)
+        mockMvc.perform(post("/api/refrigerator").with(authentication(auth))).andExpect(status().isCreated)
 
         val ing = ingredientRepository.save(Ingredient(IngredientCategory.VEGETABLE, "양파"))
 
-        mockMvc.perform(put("/refrigerator/ingredient/{id}", ing.id!!).with(authentication(auth)))
+        mockMvc.perform(put("/api/refrigerator/ingredient/{id}", ing.id!!).with(authentication(auth)))
             .andExpect(status().isOk)
 
         val u = userRepository.findByEmail(email).orElseThrow()
@@ -102,13 +102,13 @@ class RefrigeratorControllerTest {
 
         val auth = JwtAuthenticationToken(jwt, emptyList(), email)
 
-        mockMvc.perform(post("/refrigerator").with(authentication(auth))).andExpect(status().isCreated)
+        mockMvc.perform(post("/api/refrigerator").with(authentication(auth))).andExpect(status().isCreated)
 
         val ing = ingredientRepository.save(Ingredient(IngredientCategory.VEGETABLE, "당근"))
-        mockMvc.perform(put("/refrigerator/ingredient/{id}", ing.id!!).with(authentication(auth)))
+        mockMvc.perform(put("/api/refrigerator/ingredient/{id}", ing.id!!).with(authentication(auth)))
             .andExpect(status().isOk)
 
-        mockMvc.perform(delete("/refrigerator/ingredient/{id}", ing.id!!).with(authentication(auth)))
+        mockMvc.perform(delete("/api/refrigerator/ingredient/{id}", ing.id!!).with(authentication(auth)))
             .andExpect(status().isOk)
 
         val u = userRepository.findByEmail(email).orElseThrow()
