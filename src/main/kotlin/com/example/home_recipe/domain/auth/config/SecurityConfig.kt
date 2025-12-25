@@ -6,7 +6,6 @@ import org.springframework.context.annotation.Configuration
 import org.springframework.core.convert.converter.Converter
 import org.springframework.http.HttpMethod
 import org.springframework.security.authentication.AbstractAuthenticationToken
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
 import org.springframework.security.config.annotation.web.builders.HttpSecurity
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity
 import org.springframework.security.config.http.SessionCreationPolicy
@@ -15,6 +14,7 @@ import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.security.oauth2.jwt.Jwt
 import org.springframework.security.oauth2.jwt.JwtDecoder
 import org.springframework.security.oauth2.jwt.NimbusJwtDecoder
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken
 import org.springframework.security.web.SecurityFilterChain
 import javax.crypto.spec.SecretKeySpec
 
@@ -41,10 +41,10 @@ class SecurityConfig(
     }
 
     @Bean
-    fun jwtAuthenticationConverter(): Converter<Jwt, out AbstractAuthenticationToken> {
+    fun jwtAuthenticationConverter(): Converter<Jwt, AbstractAuthenticationToken> {
         return Converter { jwt ->
             val email = jwt.getClaim<String>(EMAIL) ?: jwt.subject
-            UsernamePasswordAuthenticationToken(email, null, emptyList())
+            JwtAuthenticationToken(jwt, emptyList(), email)
         }
     }
 
@@ -71,6 +71,7 @@ class SecurityConfig(
                     "/api/user/**",
                     "/api/auth/reissue",
                     "/api/auth/login",
+                    "/api/auth/logout",
                     "/actuator/**"
                 ).permitAll()
 
