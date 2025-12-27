@@ -1,11 +1,7 @@
 package com.example.home_recipe.controller.recommendation
 
-import com.example.home_recipe.controller.recipe.response.RecipeDecision
-import com.example.home_recipe.controller.recipe.response.RecipeDetail
-import com.example.home_recipe.controller.recipe.response.RecipesResponse
 import com.example.home_recipe.controller.recommendation.dto.RecommendationDetail
 import com.example.home_recipe.controller.recommendation.dto.RecommendationsResponse
-import com.example.home_recipe.service.recipe.RecipeService
 import com.example.home_recipe.service.recommendation.RecommendationService
 import org.junit.jupiter.api.DisplayName
 import org.mockito.kotlin.whenever
@@ -68,9 +64,13 @@ class RecommendationControllerTest {
                 .with(authentication(auth))
         )
             .andExpect(status().isCreated)
-            .andExpect(jsonPath("$.response.data.recommendations[0].recipeName")
-                .value("김치볶음밥"))
-            .andExpect(jsonPath("$.response.data.recommendations[0].ingredients[0]")
-                .value("김치"))
+            .andExpect(
+                jsonPath("$.response.data.recommendations[0].recipeName")
+                    .value("김치볶음밥")
+            )
+            .andExpect(
+                jsonPath("$.response.data.recommendations[0].ingredients[0]")
+                    .value("김치")
+            )
     }
 }
