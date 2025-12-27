@@ -20,7 +20,7 @@ class RecipeService(
     fun chat(email: String): RecipesResponse {
         val params = ChatCompletionCreateParams.builder()
             .addSystemMessage(RecipePrompt.SYSTEM_PROMPT)
-            .addUserMessage(RecipePrompt.userPrompt(refrigeratorService.getAllIngredients(email)))
+            .addUserMessage(RecipePrompt.userPrompt(refrigeratorService.getMyIngredientsOnlyName(email)))
             .model(ChatModel.GPT_5_MINI)
             .responseFormat(RecipesResponse::class.java)
             .build()
