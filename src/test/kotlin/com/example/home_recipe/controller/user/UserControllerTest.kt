@@ -1,4 +1,4 @@
-package com.example.home_recipe.controller
+package com.example.home_recipe.controller.user
 
 import com.example.home_recipe.controller.user.dto.request.EmailRequest
 import com.example.home_recipe.controller.user.dto.request.JoinRequest
@@ -16,7 +16,6 @@ import com.fasterxml.jackson.module.kotlin.registerKotlinModule
 import jakarta.transaction.Transactional
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.ValueSource
-import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 

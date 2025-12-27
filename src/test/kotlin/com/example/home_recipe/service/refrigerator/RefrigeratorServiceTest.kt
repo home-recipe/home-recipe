@@ -144,7 +144,7 @@ class RefrigeratorServiceTest {
         whenever(userRepository.findByEmail(email)).thenReturn(Optional.of(user))
 
         // when
-        val removed = refrigeratorService.useIngredient(email, 10L)
+        val removed = refrigeratorService.removeIngredient(email, 10L)
 
         // then
         Assertions.assertThat(removed).isTrue()
@@ -294,7 +294,7 @@ class RefrigeratorServiceTest {
 
         // when & then
         assertThatThrownBy {
-            refrigeratorService.useIngredient(email, 1L)
+            refrigeratorService.removeIngredient(email, 1L)
         }
             .isInstanceOf(BusinessException::class.java)
             .hasMessageContaining(RefrigeratorCode.REFRIGERATOR_ERROR_004.message)
@@ -311,7 +311,7 @@ class RefrigeratorServiceTest {
         whenever(userRepository.findByEmail(email)).thenReturn(Optional.of(user))
 
         // when
-        val removed = refrigeratorService.useIngredient(email, 12345L)
+        val removed = refrigeratorService.removeIngredient(email, 12345L)
 
         // then
         Assertions.assertThat(removed).isFalse()
