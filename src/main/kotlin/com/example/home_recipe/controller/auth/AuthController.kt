@@ -10,6 +10,7 @@ import com.example.home_recipe.service.auth.AuthService
 import jakarta.validation.Valid
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
+import org.springframework.security.core.Authentication
 import org.springframework.security.core.annotation.AuthenticationPrincipal
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
@@ -28,14 +29,14 @@ class AuthController(
     }
 
     @PostMapping("/logout")
-    fun logout(@AuthenticationPrincipal principal: EmailPrincipal): ResponseEntity<ApiResponse<Unit>> {
-        return ApiResponse.success(authService.logout(principal.email), AuthCode.AUTH_LOGOUT_SUCCESS, HttpStatus.OK)
+    fun logout(authentication: Authentication): ResponseEntity<ApiResponse<Unit>> {
+        return ApiResponse.success(authService.logout(authentication.name), AuthCode.AUTH_LOGOUT_SUCCESS, HttpStatus.OK)
     }
 
     @PostMapping("/reissue")
-    fun reissueAccessToken(@AuthenticationPrincipal principal: EmailPrincipal): ResponseEntity<ApiResponse<AccessTokenResponse>> {
+    fun reissueAccessToken(authentication: Authentication): ResponseEntity<ApiResponse<AccessTokenResponse>> {
         return ApiResponse.success(
-            authService.reissueAccessToken(principal.email),
+            authService.reissueAccessToken(authentication.name),
             AuthCode.AUTH_REISSUE_SUCCESS,
             HttpStatus.OK
         )
