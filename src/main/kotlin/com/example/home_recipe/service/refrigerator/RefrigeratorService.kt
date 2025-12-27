@@ -74,7 +74,7 @@ class RefrigeratorService(
     }
 
     @Transactional
-    fun useIngredient(email: String, ingredientId: Long): Boolean {
+    fun removeIngredient(email: String, ingredientId: Long): Boolean {
         val user = userRepository.findByEmail(email)
             .orElseThrow { BusinessException(UserCode.LOGIN_ERROR_002, HttpStatus.UNAUTHORIZED) }
 
