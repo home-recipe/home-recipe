@@ -1,5 +1,6 @@
 package com.example.home_recipe.controller.refrigerator
 
+import com.example.home_recipe.controller.refrigerator.dto.response.RefrigeratorResponse
 import com.example.home_recipe.controller.user.dto.response.EmailPrincipal
 import com.example.home_recipe.global.response.ApiResponse
 import com.example.home_recipe.global.response.code.RefrigeratorCode
@@ -31,5 +32,11 @@ class RefrigeratorController(
     fun use(authentication: Authentication, @PathVariable ingredientId: Long): ResponseEntity<ApiResponse<Boolean>> {
         refrigeratorService.useIngredient(authentication.name, ingredientId)
         return ApiResponse.success(true, RefrigeratorCode.USE_INGREDIENT_SUCCESS, HttpStatus.OK)
+    }
+
+    @GetMapping
+    fun getMyIngredients(authentication: Authentication) : ResponseEntity<ApiResponse<RefrigeratorResponse>> {
+        val result = refrigeratorService.getMyIngredients(authentication.name)
+        return ApiResponse.success(result, RefrigeratorCode.REFRIGERATOR_SUCCESS, HttpStatus.OK)
     }
 }
