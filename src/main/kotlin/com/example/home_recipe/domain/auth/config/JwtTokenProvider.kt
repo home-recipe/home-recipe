@@ -10,6 +10,8 @@ import io.jsonwebtoken.security.Keys
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Component
+import java.time.Duration
+import java.time.Instant
 import java.util.*
 
 @Component
@@ -39,15 +41,28 @@ class JwtTokenProvider(
             .compact()
     }
 
+    fun getRemainingSeconds(token: String): Long {
+        val claims = Jwts.parserBuilder()
+            .setSigningKey(key)
+            .build()
+            .parseClaimsJws(token)
+            .body
+
+        val exp = claims.expiration.toInstant()
+        val now = Instant.now()
+
+        return Duration.between(now, exp).seconds.coerceAtLeast(0)
+    }
+
     fun validateToken(token: String) {
         try {
-            Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJwt(token)
+            Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws(token)
         } catch (e: ExpiredJwtException) {
-            throw BusinessException(AuthCode.AUTH_EXPIRED_TOKEN, HttpStatus.UNAUTHORIZED)
+            throw BusinessException(AuthCode.AUTH_REFRESH_EXPIRED_TOKEN, HttpStatus.UNAUTHORIZED)
         } catch (e: JwtException) {
-            throw BusinessException(AuthCode.AUTH_INVALID_TOKEN, HttpStatus.UNAUTHORIZED)
+            throw BusinessException(AuthCode.AUTH_REFRESH_INVALID_TOKEN, HttpStatus.UNAUTHORIZED)
         } catch (e: IllegalArgumentException) {
-            throw BusinessException(AuthCode.AUTH_INVALID_TOKEN, HttpStatus.UNAUTHORIZED)
+            throw BusinessException(AuthCode.AUTH_REFRESH_INVALID_TOKEN, HttpStatus.UNAUTHORIZED)
         }
 
     }
