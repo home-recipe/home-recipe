@@ -2,6 +2,7 @@ package com.example.home_recipe.controller.refrigerator
 
 import com.example.home_recipe.domain.ingredient.Ingredient
 import com.example.home_recipe.domain.ingredient.IngredientCategory
+import com.example.home_recipe.domain.refrigerator.Refrigerator
 import com.example.home_recipe.domain.user.User
 import com.example.home_recipe.repository.IngredientRepository
 import com.example.home_recipe.repository.RefrigeratorRepository
@@ -113,5 +114,32 @@ class RefrigeratorControllerTest {
 
         val u = userRepository.findByEmail(email).orElseThrow()
         assertThat(u.refrigeratorExternal.ingredients.any { it.id == ing.id }).isFalse()
+    }
+
+    @Test
+    @DisplayName("GET - 재료 조회")
+    fun getMyIngredients() {
+        val email = "use1@example.com"
+        userRepository.save(User(email = email, password = "pw", name = "me"))
+
+        val jwt = Jwt.withTokenValue("mock-token")
+            .header("alg", "none")
+            .subject(email)
+            .claim("email", email)
+            .build()
+        val auth = JwtAuthenticationToken(jwt, emptyList(), email)
+
+        mockMvc.perform(post("/api/refrigerator").with(authentication(auth))).andExpect(status().isCreated)
+
+        val carrot = ingredientRepository.save(Ingredient(IngredientCategory.VEGETABLE, "당근"))
+        mockMvc.perform(put("/api/refrigerator/ingredient/{id}", carrot.id!!).with(authentication(auth)))
+            .andExpect(status().isOk)
+
+        mockMvc.perform(get("/api/refrigerator").with(authentication(auth)))
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.response.data.myRefrigerator").isArray)
+            .andExpect(jsonPath("$.response.data.myRefrigerator.length()").value(4))
+            .andExpect(jsonPath("$.response.data.myRefrigerator[*].name")
+                .value(org.hamcrest.Matchers.containsInAnyOrder("당근", "쌀", "계란", "간장")))
     }
 }
