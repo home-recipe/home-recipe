@@ -1,9 +1,8 @@
-package com.example.home_recipe.controller
+package com.example.home_recipe.controller.auth
 
 import com.example.home_recipe.controller.auth.dto.response.LoginResponse
 import com.example.home_recipe.controller.user.dto.request.JoinRequest
 import com.example.home_recipe.controller.user.dto.request.LoginRequest
-import com.example.home_recipe.controller.user.dto.response.EmailPrincipal
 import com.example.home_recipe.repository.RefreshTokenRepository
 import com.example.home_recipe.repository.UserRepository
 import com.example.home_recipe.service.auth.AuthService
@@ -19,7 +18,6 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.http.MediaType
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
 import org.springframework.security.oauth2.jwt.Jwt
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken
 import org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.authentication
