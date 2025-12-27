@@ -1,6 +1,8 @@
 package com.example.home_recipe.service.refrigerator
 
+import com.example.home_recipe.controller.ingredient.dto.response.IngredientResponse
 import com.example.home_recipe.controller.refrigerator.dto.UserJoinedEvent
+import com.example.home_recipe.controller.refrigerator.dto.response.RefrigeratorResponse
 import com.example.home_recipe.domain.ingredient.BasicIngredients
 import com.example.home_recipe.domain.ingredient.Ingredient
 import com.example.home_recipe.domain.refrigerator.Refrigerator
@@ -84,6 +86,34 @@ class RefrigeratorService(
 
         return fridge.useIngredientById(ingredientId)
     }
+
+    @Transactional(readOnly = true)
+    fun getMyIngredients(email: String): RefrigeratorResponse {
+        val user = userRepository.findByEmailWithRefrigerator(email)
+            .orElseThrow { BusinessException(UserCode.LOGIN_ERROR_002, HttpStatus.NOT_FOUND) }
+
+        val refrigerator = refrigeratorRepository
+            .findByIdWithIngredients(requireNotNull(user.refrigeratorExternal.id))
+            .orElseThrow {
+                BusinessException(
+                    RefrigeratorCode.REFRIGERATOR_ERROR_004,
+                    HttpStatus.INTERNAL_SERVER_ERROR
+                )
+            }
+        val ingredientResponses = refrigerator.ingredients
+            .map { it.toResponse() }
+
+        return RefrigeratorResponse(
+            myRefrigerator = ingredientResponses
+        )
+    }
+
+    private fun Ingredient.toResponse(): IngredientResponse =
+        IngredientResponse(
+            id = requireNotNull(this.id),
+            category = this.category,
+            name = this.name
+        )
 
     @Transactional(readOnly = true)
     fun getAllIngredients(email: String): List<String> {

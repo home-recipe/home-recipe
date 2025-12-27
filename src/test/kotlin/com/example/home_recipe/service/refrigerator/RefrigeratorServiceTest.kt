@@ -12,8 +12,7 @@ import com.example.home_recipe.repository.IngredientRepository
 import com.example.home_recipe.repository.RefrigeratorRepository
 import com.example.home_recipe.repository.UserRepository
 import org.assertj.core.api.Assertions
-import org.assertj.core.api.Assertions.assertThat
-import org.assertj.core.api.Assertions.assertThatThrownBy
+import org.assertj.core.api.Assertions.*
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
@@ -25,6 +24,7 @@ import org.mockito.kotlin.verify
 import org.mockito.kotlin.times
 import org.mockito.junit.jupiter.MockitoExtension
 import org.mockito.Mockito.*
+import org.springframework.test.util.ReflectionTestUtils
 import java.util.*
 
 @ExtendWith(MockitoExtension::class)
@@ -73,6 +73,82 @@ class RefrigeratorServiceTest {
 
         verify(refrigeratorRepository, times(1)).save(any<Refrigerator>())
         verify(ingredientRepository, atLeastOnce()).save(any<Ingredient>())
+    }
+
+    @Test
+    @DisplayName("냉장고의 재료 모두 가져오기")
+    fun 냉장고_재료_모두_가져오기() {
+        // given
+        val email = "test@example.com"
+        val user = User(email = email, password = "encoded", name = "name")
+        val fridge = Refrigerator.create()
+        ReflectionTestUtils.setField(fridge, "id", 1L)
+        user.assignRefrigerator(fridge)
+
+        // 기본 재료 엔티티 mocking
+        val egg = Ingredient(IngredientCategory.ETC, "계란").apply { id = 1L }
+        val rice = Ingredient(IngredientCategory.GRAIN, "쌀").apply { id = 2L }
+        fridge.addIngredient(egg)
+        fridge.addIngredient(rice)
+
+        whenever(userRepository.findByEmailWithRefrigerator(email)).thenReturn(Optional.of(user))
+        whenever(refrigeratorRepository.findByIdWithIngredients(anyLong()))
+            .thenReturn(Optional.of(fridge))
+
+        // when
+        val response = refrigeratorService.getMyIngredients(email)
+
+        // then
+        // 재료가 모두 포함되었는지
+        Assertions.assertThat(response.myRefrigerator)
+            .extracting<String> { ingredient -> ingredient.name }
+            .containsExactlyInAnyOrder("계란", "쌀")
+    }
+
+
+    @Test
+    @DisplayName("재료 추가 - 정상 추가 시 true")
+    fun 재료_추가_성공() {
+        // given
+        val email = "test@example.com"
+        val user = User(email = email, password = "encoded", name = "name")
+        val fridge = Refrigerator.create()
+        user.assignRefrigerator(fridge)
+
+        val ingredient = Ingredient(IngredientCategory.VEGETABLE, "양파").apply { id = 10L }
+
+        whenever(userRepository.findByEmail(email)).thenReturn(Optional.of(user))
+        whenever(ingredientRepository.findById(10L)).thenReturn(Optional.of(ingredient))
+
+        // when
+        val added = refrigeratorService.addIngredient(email, 10L)
+
+        // then
+        Assertions.assertThat(added).isTrue()
+        Assertions.assertThat(fridge.ingredients.any { it.id == 10L }).isTrue()
+        verify(ingredientRepository, times(1)).findById(10L)
+    }
+
+    @Test
+    @DisplayName("재료 사용 - 존재하면 제거되고 true")
+    fun 재료_사용_성공() {
+        // given
+        val email = "test@example.com"
+        val user = User(email = email, password = "encoded", name = "name")
+        val fridge = Refrigerator.create()
+        user.assignRefrigerator(fridge)
+
+        val ingredient = Ingredient(IngredientCategory.VEGETABLE, "양파").apply { id = 10L }
+        fridge.addIngredient(ingredient)
+
+        whenever(userRepository.findByEmail(email)).thenReturn(Optional.of(user))
+
+        // when
+        val removed = refrigeratorService.useIngredient(email, 10L)
+
+        // then
+        Assertions.assertThat(removed).isTrue()
+        Assertions.assertThat(fridge.ingredients.any { it.id == 10L }).isFalse()
     }
 
     @Test
@@ -131,50 +207,6 @@ class RefrigeratorServiceTest {
     }
 
 
-    @Test
-    @DisplayName("재료 추가 - 정상 추가 시 true")
-    fun 재료_추가_성공() {
-        // given
-        val email = "test@example.com"
-        val user = User(email = email, password = "encoded", name = "name")
-        val fridge = Refrigerator.create()
-        user.assignRefrigerator(fridge)
-
-        val ingredient = Ingredient(IngredientCategory.VEGETABLE, "양파").apply { id = 10L }
-
-        whenever(userRepository.findByEmail(email)).thenReturn(Optional.of(user))
-        whenever(ingredientRepository.findById(10L)).thenReturn(Optional.of(ingredient))
-
-        // when
-        val added = refrigeratorService.addIngredient(email, 10L)
-
-        // then
-        Assertions.assertThat(added).isTrue()
-        Assertions.assertThat(fridge.ingredients.any { it.id == 10L }).isTrue()
-        verify(ingredientRepository, times(1)).findById(10L)
-    }
-
-    @Test
-    @DisplayName("재료 사용 - 존재하면 제거되고 true")
-    fun 재료_사용_성공() {
-        // given
-        val email = "test@example.com"
-        val user = User(email = email, password = "encoded", name = "name")
-        val fridge = Refrigerator.create()
-        user.assignRefrigerator(fridge)
-
-        val ingredient = Ingredient(IngredientCategory.VEGETABLE, "양파").apply { id = 10L }
-        fridge.addIngredient(ingredient)
-
-        whenever(userRepository.findByEmail(email)).thenReturn(Optional.of(user))
-
-        // when
-        val removed = refrigeratorService.useIngredient(email, 10L)
-
-        // then
-        Assertions.assertThat(removed).isTrue()
-        Assertions.assertThat(fridge.ingredients.any { it.id == 10L }).isFalse()
-    }
 
     //////////////// 예외/엣지 테스트
 
