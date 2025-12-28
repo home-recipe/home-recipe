@@ -31,8 +31,7 @@ class RefrigeratorController(
     @DeleteMapping("/ingredient/{ingredientId}")
     fun removeIngredient(authentication: Authentication, @PathVariable ingredientId: Long): ResponseEntity<ApiResponse<Boolean>> {
         refrigeratorService.removeIngredient(authentication.name, ingredientId)
-        return ApiResponse.success(true, RefrigeratorCode.USE_INGREDIENT_SUCCESS, HttpStatus.OK)
-    }
+  
 
     @GetMapping
     fun getMyIngredients(authentication: Authentication) : ResponseEntity<ApiResponse<RefrigeratorResponse>> {
