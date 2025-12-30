@@ -14,7 +14,7 @@ interface RefrigeratorRepository : JpaRepository<Refrigerator, Long> {
     @Query("""
         select r
         from Refrigerator r
-        join fetch r.ingredients
+        left join fetch r.ingredients
         where r.id = :id
     """)
     fun findByIdWithIngredients(@Param("id")id : Long) : Optional<Refrigerator>
