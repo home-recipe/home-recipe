@@ -14,6 +14,7 @@ import com.example.home_recipe.global.response.code.UserCode
 import com.example.home_recipe.repository.IngredientRepository
 import com.example.home_recipe.repository.RefrigeratorRepository
 import com.example.home_recipe.repository.UserRepository
+import org.slf4j.LoggerFactory
 import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Propagation
@@ -27,6 +28,7 @@ class RefrigeratorService(
     private val ingredientRepository: IngredientRepository,
     private val userRepository: UserRepository,
 ) {
+
     @Transactional
     fun createForUser(email: String): Refrigerator {
         val user = userRepository.findByEmail(email)

@@ -9,6 +9,7 @@ import com.example.home_recipe.global.response.code.IngredientCode
 import com.example.home_recipe.repository.IngredientRepository
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
+import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
@@ -113,5 +114,30 @@ class IngredientServiceTest {
         assertThatThrownBy { ingredientService.update(7L, req) }
             .isInstanceOf(BusinessException::class.java)
             .hasMessageContaining(IngredientCode.INGREDIENT_ERROR_013.message)
+    }
+
+    @Test
+    @DisplayName("재료 조회하기 - 단어 검색 시 단어가 포함된 재료를 가져오는지 테스트")
+    fun find_ingrdients_containing_name() {
+        val grain1 = Ingredient(IngredientCategory.GRAIN, "쌀").apply { id = 7L }
+        val grain2 = Ingredient(IngredientCategory.GRAIN, "햅쌀").apply { id = 8L }
+        val grain3 = Ingredient(IngredientCategory.GRAIN, "찹쌀").apply { id = 8L }
+        val grains = listOf(grain1, grain2, grain3)
+        whenever(ingredientRepository.findIngredientContainingName(any())).thenReturn(grains)
+
+        val result = ingredientService.findIngredientsContainingName("쌀")
+
+        Assertions.assertEquals(3, result.size);
+    }
+
+    @Test
+    @DisplayName("재료 조회하기 - 조회되는 단어가 없다면 빈 리스트 반환하는지 확인")
+    fun find_ingrdients_containing_name_isEmpty() {
+       val meats = emptyList<Ingredient>()
+        whenever(ingredientRepository.findIngredientContainingName(any())).thenReturn(meats)
+
+        val result = ingredientService.findIngredientsContainingName("고기")
+
+        Assertions.assertEquals(0, result.size);
     }
 }

@@ -1,8 +1,8 @@
 package com.example.home_recipe.service.ingredient
 
 import com.example.home_recipe.controller.ingredient.dto.request.CreateIngredientRequest
-import com.example.home_recipe.controller.ingredient.dto.response.IngredientResponse
 import com.example.home_recipe.controller.ingredient.dto.request.UpdateIngredientRequest
+import com.example.home_recipe.controller.ingredient.dto.response.IngredientResponse
 import com.example.home_recipe.controller.ingredient.dto.response.IngredientResponseAssembler
 import com.example.home_recipe.domain.ingredient.Ingredient
 import com.example.home_recipe.global.exception.BusinessException
@@ -50,6 +50,12 @@ class IngredientService(
         ingredient.name = request.name
 
         return IngredientResponseAssembler.toIngredientResponse(ingredient)
+    }
+
+    @Transactional(readOnly = true)
+    fun findIngredientsContainingName(name: String): List<IngredientResponse> {
+        val ingredients = ingredientRepository.findIngredientContainingName(name)
+        return IngredientResponseAssembler.toIngredientResponseList(ingredients)
     }
 }
 
