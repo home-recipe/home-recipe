@@ -13,7 +13,7 @@ class Ingredient protected constructor() {
     @Column(nullable = false, length = 32)
     lateinit var category: IngredientCategory
 
-    @Column(nullable = false, length = 100)
+    @Column(nullable = false, unique = true, length = 100)
     var name: String = ""
 
     constructor(category: IngredientCategory, name: String) : this() {
