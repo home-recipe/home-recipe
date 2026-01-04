@@ -1,7 +1,7 @@
 services:
   app:
     build: .
-    container_name: home-recipe-app
+    container_name: home-recipe
     ports:
       - "8080:8080"
     env_file:
