@@ -72,7 +72,8 @@ class SecurityConfig(
                     "/api/auth/reissue",
                     "/api/auth/login",
                     "/api/auth/logout",
-                    "/actuator/**"
+                    "/actuator/**",
+                    "/api/ingredients"
                 ).permitAll()
 
                 it.anyRequest().authenticated()

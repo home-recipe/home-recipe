@@ -10,5 +10,6 @@ enum class IngredientCode(override val code: String, override val message: Strin
     INGREDIENT_ERROR_008("INGREDIENT_ERROR_008", "잘못된 재료 ID"),
     INGREDIENT_ERROR_011("INGREDIENT_ERROR_011", "해당 재료 없음"),
     INGREDIENT_ERROR_012("INGREDIENT_ERROR_012", "재료 이름 제한 조건 불만족"),
-    INGREDIENT_ERROR_013("INGREDIENT_ERROR_013", "재료 카테고리 누락")
+    INGREDIENT_ERROR_013("INGREDIENT_ERROR_013", "재료 카테고리 누락"),
+    OPEN_API_INGREDIENT_ERROR_01("OPEN_API_INGREDIENT_ERROR_01", "Open API 응답 에러")
 }

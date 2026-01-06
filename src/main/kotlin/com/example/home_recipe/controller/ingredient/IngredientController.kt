@@ -4,10 +4,12 @@ import com.example.home_recipe.controller.ingredient.dto.request.CreateIngredien
 import com.example.home_recipe.controller.ingredient.dto.request.CreateIngredientRequest
 import com.example.home_recipe.controller.ingredient.dto.request.FindIngredientRequest
 import com.example.home_recipe.controller.ingredient.dto.request.UpdateIngredientRequest
+import com.example.home_recipe.controller.ingredient.dto.response.FoodItemDto
 import com.example.home_recipe.controller.ingredient.dto.response.IngredientResponse
 import com.example.home_recipe.global.response.ApiResponse
 import com.example.home_recipe.global.response.code.IngredientCode
 import com.example.home_recipe.service.ingredient.IngredientService
+import com.example.home_recipe.service.ingredient.OpenApiIngredientService
 import jakarta.validation.Valid
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
@@ -17,13 +19,20 @@ import org.springframework.web.bind.annotation.*
 @RestController
 @RequestMapping("/api/ingredients")
 class IngredientController(
-    private val ingredientService: IngredientService
+    private val ingredientService: IngredientService,
+    private val openApiService: OpenApiIngredientService
 ) {
 
     @PostMapping
     fun create(@Valid @RequestBody request: CreateIngredientRequest): ResponseEntity<ApiResponse<IngredientResponse>> {
         val result = ingredientService.create(request)
         return ApiResponse.success(result, IngredientCode.CREATE_SUCCESS, HttpStatus.CREATED)
+    }
+
+    @GetMapping
+    suspend fun findIngredient(@Valid @RequestBody request: FindIngredientRequest) : ResponseEntity<ApiResponse<List<FoodItemDto>>> {
+        val result = openApiService.searchExternalFood(request.name)
+        return ApiResponse.success(result, IngredientCode.FIND_SUCCESS, HttpStatus.OK)
     }
 
     @PostMapping("/batch")
