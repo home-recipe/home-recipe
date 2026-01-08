@@ -73,7 +73,6 @@ class SecurityConfig(
                     "/api/auth/login",
                     "/api/auth/logout",
                     "/actuator/**",
-                    "/api/ingredients"
                 ).permitAll()
 
                 it.anyRequest().authenticated()

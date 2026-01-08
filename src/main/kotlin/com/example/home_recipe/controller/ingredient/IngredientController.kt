@@ -30,8 +30,10 @@ class IngredientController(
     }
 
     @GetMapping
-    suspend fun findIngredient(@Valid @RequestBody request: FindIngredientRequest) : ResponseEntity<ApiResponse<List<FoodItemDto>>> {
-        val result = openApiService.searchExternalFood(request.name)
+    suspend fun findIngredient(
+        authentication: Authentication,
+        @RequestParam name: String) : ResponseEntity<ApiResponse<List<FoodItemDto>>> {
+        val result = openApiService.searchExternalFood(name)
         return ApiResponse.success(result, IngredientCode.FIND_SUCCESS, HttpStatus.OK)
     }
 
