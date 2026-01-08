@@ -7,7 +7,8 @@ object IngredientResponseAssembler {
         return IngredientResponse(
             requireNotNull(ingredient.id),
             ingredient.category,
-            ingredient.name
+            ingredient.name,
+            Source.DATABASE
         )
     }
 

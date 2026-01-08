@@ -4,7 +4,7 @@ import com.example.home_recipe.controller.ingredient.dto.request.CreateIngredien
 import com.example.home_recipe.controller.ingredient.dto.request.CreateIngredientRequest
 import com.example.home_recipe.controller.ingredient.dto.request.FindIngredientRequest
 import com.example.home_recipe.controller.ingredient.dto.request.UpdateIngredientRequest
-import com.example.home_recipe.controller.ingredient.dto.response.FoodItemDto
+import com.example.home_recipe.controller.ingredient.dto.response.OpenApiIngredientResponse
 import com.example.home_recipe.controller.ingredient.dto.response.IngredientResponse
 import com.example.home_recipe.global.response.ApiResponse
 import com.example.home_recipe.global.response.code.IngredientCode
@@ -32,7 +32,7 @@ class IngredientController(
     @GetMapping
     suspend fun findIngredient(
         authentication: Authentication,
-        @RequestParam name: String) : ResponseEntity<ApiResponse<List<FoodItemDto>>> {
+        @RequestParam name: String) : ResponseEntity<ApiResponse<List<OpenApiIngredientResponse>>> {
         val result = openApiService.searchExternalFood(name)
         return ApiResponse.success(result, IngredientCode.FIND_SUCCESS, HttpStatus.OK)
     }

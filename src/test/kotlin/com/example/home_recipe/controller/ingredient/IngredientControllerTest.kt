@@ -1,6 +1,7 @@
 package com.example.home_recipe.controller.ingredient
 
-import com.example.home_recipe.controller.ingredient.dto.response.FoodItemDto
+import com.example.home_recipe.controller.ingredient.dto.response.OpenApiIngredientResponse
+import com.example.home_recipe.controller.ingredient.dto.response.Source
 import com.example.home_recipe.domain.ingredient.Ingredient
 import com.example.home_recipe.domain.ingredient.IngredientCategory
 import com.example.home_recipe.domain.user.User
@@ -102,8 +103,8 @@ class IngredientControllerTest {
         val auth = funGetAuth(email)
 
         val foodItems = listOf(
-            FoodItemDto("초콜릿"),
-            FoodItemDto("달달한 초콜릿")
+            OpenApiIngredientResponse("초콜릿", Source.OPEN_API),
+            OpenApiIngredientResponse("달달한 초콜릿", Source.OPEN_API)
         )
 
         wheneverBlocking { openApiService.searchExternalFood(any()) }
@@ -133,8 +134,8 @@ class IngredientControllerTest {
         val auth = funGetAuth(email)
 
         val foodItems = listOf(
-            FoodItemDto("초콜릿"),
-            FoodItemDto("달달한 초콜릿")
+            OpenApiIngredientResponse("초콜릿", Source.OPEN_API),
+            OpenApiIngredientResponse("달달한 초콜릿", Source.OPEN_API)
         )
 
 
