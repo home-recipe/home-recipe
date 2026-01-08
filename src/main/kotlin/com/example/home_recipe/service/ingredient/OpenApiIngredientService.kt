@@ -15,7 +15,8 @@ import java.net.URLEncoder
 class OpenApiIngredientService(
     @Value("\${external-api.raw-food.service-key}") private val rawFoodKey: String,
     @Value("\${external-api.process-food.service-key}") private val processFoodKey: String,
-    @Value("\${external-api.raw-food.url}") private val apiUrl: String,
+    @Value("\${external-api.raw-food.url}") private val rawFoodUrl: String,
+    @Value("\${external-api.process-food.url}") private val processFoodUrl: String,
     private val webClientBuilder: WebClient.Builder
 ) {
     companion object {
@@ -39,17 +40,18 @@ class OpenApiIngredientService(
 
     suspend fun searchExternalFood(keyword: String): List<FoodItemDto> {
         for (level in FOOD_SEARCH_LEVELS) {
-            val result = callApiWithParam(level, keyword, rawFoodKey)
+            val result = callApiWithParam(level, keyword, rawFoodKey, rawFoodUrl)
             if (result.isNotEmpty()) return result
         }
         for (level in FOOD_SEARCH_LEVELS) {
-            val result = callApiWithParam(level, keyword, processFoodKey)
+            val result = callApiWithParam(level, keyword, processFoodKey, processFoodUrl)
             if (result.isNotEmpty()) return result
         }
         return emptyList()
     }
 
-    suspend fun callApiWithParam(paramName: String, keyword: String, serviceKey: String): List<FoodItemDto> {
+    suspend fun callApiWithParam(paramName: String, keyword: String, serviceKey: String, apiUrl: String)
+            : List<FoodItemDto> {
         val encodedKeyword = URLEncoder.encode(keyword, ENCODING_TYPE)
 
         val finalUrl = "${apiUrl}?serviceKey=$serviceKey" +
