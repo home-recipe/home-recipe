@@ -50,7 +50,7 @@ class OpenApiIngredientService(
         return emptyList()
     }
 
-    suspend fun callApiWithParam(paramName: String, keyword: String, serviceKey: String, apiUrl: String)
+    private suspend fun callApiWithParam(paramName: String, keyword: String, serviceKey: String, apiUrl: String)
             : List<FoodItemDto> {
         val encodedKeyword = URLEncoder.encode(keyword, ENCODING_TYPE)
 
