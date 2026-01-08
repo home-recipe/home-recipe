@@ -30,7 +30,7 @@ class IngredientController(
     }
 
     @GetMapping
-    suspend fun findIngredient(
+    suspend fun findIngredientFromOpenApi(
         authentication: Authentication,
         @RequestParam name: String) : ResponseEntity<ApiResponse<List<OpenApiIngredientResponse>>> {
         val result = openApiService.searchExternalFood(name)
