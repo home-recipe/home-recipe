@@ -2,10 +2,9 @@ package com.example.home_recipe.controller.ingredient
 
 import com.example.home_recipe.controller.ingredient.dto.request.CreateIngredientBatchRequest
 import com.example.home_recipe.controller.ingredient.dto.request.CreateIngredientRequest
-import com.example.home_recipe.controller.ingredient.dto.request.FindIngredientRequest
 import com.example.home_recipe.controller.ingredient.dto.request.UpdateIngredientRequest
-import com.example.home_recipe.controller.ingredient.dto.response.OpenApiIngredientResponse
 import com.example.home_recipe.controller.ingredient.dto.response.IngredientResponse
+import com.example.home_recipe.controller.ingredient.dto.response.OpenApiIngredientResponse
 import com.example.home_recipe.global.response.ApiResponse
 import com.example.home_recipe.global.response.code.IngredientCode
 import com.example.home_recipe.service.ingredient.IngredientService
@@ -30,9 +29,19 @@ class IngredientController(
     }
 
     @GetMapping
+    fun findIngredientsFromDB(
+        authentication: Authentication,
+        @RequestParam name: String
+    ): ResponseEntity<ApiResponse<List<IngredientResponse>>> {
+        val result = ingredientService.findIngredientsContainingName(name)
+        return ApiResponse.success(result, IngredientCode.FIND_SUCCESS, HttpStatus.OK)
+    }
+
+    @GetMapping("/external")
     suspend fun findIngredientFromOpenApi(
         authentication: Authentication,
-        @RequestParam name: String) : ResponseEntity<ApiResponse<List<OpenApiIngredientResponse>>> {
+        @RequestParam name: String
+    ): ResponseEntity<ApiResponse<List<OpenApiIngredientResponse>>> {
         val result = openApiService.searchExternalFood(name)
         return ApiResponse.success(result, IngredientCode.FIND_SUCCESS, HttpStatus.OK)
     }
@@ -50,13 +59,6 @@ class IngredientController(
             : ResponseEntity<ApiResponse<IngredientResponse>> {
         val result = ingredientService.update(id, request)
         return ApiResponse.success(result, IngredientCode.UPDATE_SUCCESS, HttpStatus.OK)
-    }
-
-    @GetMapping("/ingredient")
-    fun findIngredientsContainingName(authentication: Authentication, @Valid request: FindIngredientRequest)
-            : ResponseEntity<ApiResponse<List<IngredientResponse>>> {
-        val result = ingredientService.findIngredientsContainingName(request.name)
-        return ApiResponse.success(result, IngredientCode.FIND_SUCCESS, HttpStatus.OK)
     }
 
 }

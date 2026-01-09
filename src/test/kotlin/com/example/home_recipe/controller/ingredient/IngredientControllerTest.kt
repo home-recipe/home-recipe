@@ -81,7 +81,7 @@ class IngredientControllerTest {
 
         // 2. When & Then: 호출 및 검증F
         mockMvc.perform(
-            get("/api/ingredients/ingredient")
+            get("/api/ingredients")
                 .param("name", "고기")
                 .with(authentication(auth))
         )
@@ -112,7 +112,7 @@ class IngredientControllerTest {
 
 
         val mvcResult = mockMvc.perform(
-            get("/api/ingredients")
+            get("/api/ingredients/external")
                 .param("name", "초콜릿")
                 .with(authentication(auth))
         )
@@ -147,7 +147,7 @@ class IngredientControllerTest {
 
 
         val mvcResult = mockMvc.perform(
-            get("/api/ingredients")
+            get("/api/ingredients/external")
                 .param("name", "초콜릿")
                 .with(authentication(auth))
         )
