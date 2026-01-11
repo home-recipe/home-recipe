@@ -19,7 +19,6 @@ import org.springframework.web.bind.annotation.*
 @RequestMapping("/api/ingredients")
 class IngredientController(
     private val ingredientService: IngredientService,
-    private val openApiService: OpenApiIngredientService
 ) {
 
     @PostMapping
@@ -29,20 +28,11 @@ class IngredientController(
     }
 
     @GetMapping
-    fun findIngredientsFromDB(
+    suspend fun findIngredients(
         authentication: Authentication,
         @RequestParam name: String
     ): ResponseEntity<ApiResponse<List<IngredientResponse>>> {
         val result = ingredientService.findIngredientsContainingName(name)
-        return ApiResponse.success(result, IngredientCode.FIND_SUCCESS, HttpStatus.OK)
-    }
-
-    @GetMapping("/external")
-    suspend fun findIngredientFromOpenApi(
-        authentication: Authentication,
-        @RequestParam name: String
-    ): ResponseEntity<ApiResponse<List<OpenApiIngredientResponse>>> {
-        val result = openApiService.searchExternalFood(name)
         return ApiResponse.success(result, IngredientCode.FIND_SUCCESS, HttpStatus.OK)
     }
 

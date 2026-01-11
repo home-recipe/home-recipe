@@ -1,5 +1,6 @@
 package com.example.home_recipe.controller.ingredient
 
+import com.example.home_recipe.controller.ingredient.dto.response.IngredientResponse
 import com.example.home_recipe.controller.ingredient.dto.response.OpenApiIngredientResponse
 import com.example.home_recipe.controller.ingredient.dto.response.Source
 import com.example.home_recipe.domain.ingredient.Ingredient
@@ -9,12 +10,13 @@ import com.example.home_recipe.global.exception.BusinessException
 import com.example.home_recipe.global.response.code.IngredientCode
 import com.example.home_recipe.repository.IngredientRepository
 import com.example.home_recipe.repository.UserRepository
-import com.example.home_recipe.service.ingredient.OpenApiIngredientService
+import com.example.home_recipe.service.ingredient.IngredientService
 import com.fasterxml.jackson.databind.ObjectMapper
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
+import org.mockito.Mock
 import org.mockito.kotlin.any
 import org.mockito.kotlin.doAnswer
 import org.mockito.kotlin.wheneverBlocking
@@ -50,7 +52,7 @@ class IngredientControllerTest {
     lateinit var userRepository: UserRepository
 
     @MockBean
-    lateinit var openApiService: OpenApiIngredientService
+    lateinit var ingredientService: IngredientService
 
     @Autowired
     lateinit var objectMapper: ObjectMapper
@@ -80,11 +82,15 @@ class IngredientControllerTest {
         ingredientRepository.save(Ingredient(IngredientCategory.VEGETABLE, "당근"))
 
         // 2. When & Then: 호출 및 검증F
-        mockMvc.perform(
+        val mvcResult = mockMvc.perform(
             get("/api/ingredients")
                 .param("name", "고기")
                 .with(authentication(auth))
         )
+            .andExpect(request().asyncStarted())
+            .andReturn()
+
+        mockMvc.perform(asyncDispatch(mvcResult))
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.response.data").isArray)
             .andExpect(jsonPath("$.response.data.length()").value(3))
@@ -103,16 +109,16 @@ class IngredientControllerTest {
         val auth = funGetAuth(email)
 
         val foodItems = listOf(
-            OpenApiIngredientResponse("초콜릿", Source.OPEN_API),
-            OpenApiIngredientResponse("달달한 초콜릿", Source.OPEN_API)
+            IngredientResponse(null, null, "초콜릿", Source.OPEN_API),
+            IngredientResponse(null, null, "달달한 초콜릿", Source.OPEN_API)
         )
 
-        wheneverBlocking { openApiService.searchExternalFood(any()) }
+        wheneverBlocking { ingredientService.findIngredientsContainingName(any()) }
             .thenReturn(foodItems)
 
 
         val mvcResult = mockMvc.perform(
-            get("/api/ingredients/external")
+            get("/api/ingredients")
                 .param("name", "초콜릿")
                 .with(authentication(auth))
         )
@@ -138,8 +144,7 @@ class IngredientControllerTest {
             OpenApiIngredientResponse("달달한 초콜릿", Source.OPEN_API)
         )
 
-
-        wheneverBlocking { openApiService.searchExternalFood(any()) }
+        wheneverBlocking { ingredientService.findIngredientsContainingName(any()) }
             .doAnswer {
                 runBlocking { delay(10) }
                 throw BusinessException(IngredientCode.OPEN_API_INGREDIENT_ERROR_01, HttpStatus.INTERNAL_SERVER_ERROR)
@@ -147,7 +152,7 @@ class IngredientControllerTest {
 
 
         val mvcResult = mockMvc.perform(
-            get("/api/ingredients/external")
+            get("/api/ingredients")
                 .param("name", "초콜릿")
                 .with(authentication(auth))
         )

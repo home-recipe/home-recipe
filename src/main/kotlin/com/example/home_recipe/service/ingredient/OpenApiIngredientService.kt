@@ -1,6 +1,6 @@
 package com.example.home_recipe.service.ingredient
 
-import com.example.home_recipe.controller.ingredient.dto.response.OpenApiIngredientResponse
+import com.example.home_recipe.controller.ingredient.dto.response.IngredientResponse
 import com.example.home_recipe.controller.ingredient.dto.response.Source
 import com.example.home_recipe.global.exception.BusinessException
 import com.example.home_recipe.global.response.code.IngredientCode
@@ -39,7 +39,7 @@ class OpenApiIngredientService(
         private const val KEY_RESULT_MSG = "resultMsg"
     }
 
-    suspend fun searchExternalFood(keyword: String): List<OpenApiIngredientResponse> {
+    suspend fun searchExternalFood(keyword: String): List<IngredientResponse> {
         for (level in FOOD_SEARCH_LEVELS) {
             val result = callApiWithParam(level, keyword, rawFoodKey, rawFoodUrl)
             if (result.isNotEmpty()) return result
@@ -52,7 +52,7 @@ class OpenApiIngredientService(
     }
 
     private suspend fun callApiWithParam(paramName: String, keyword: String, serviceKey: String, apiUrl: String)
-            : List<OpenApiIngredientResponse> {
+            : List<IngredientResponse> {
         val encodedKeyword = URLEncoder.encode(keyword, ENCODING_TYPE)
 
         val finalUrl = "${apiUrl}?serviceKey=$serviceKey" +
@@ -73,7 +73,7 @@ class OpenApiIngredientService(
         }
     }
 
-    private fun verifyFoodExistence(response: Map<String, Any>, keyword: String): List<OpenApiIngredientResponse> {
+    private fun verifyFoodExistence(response: Map<String, Any>, keyword: String): List<IngredientResponse> {
         val responseMap = response[KEY_RESPONSE] as? Map<String, Any> ?: return emptyList()
         val header = responseMap[KEY_HEADER] as? Map<String, Any>
         val body = responseMap[KEY_BODY] as? Map<String, Any>
@@ -91,6 +91,6 @@ class OpenApiIngredientService(
         }
 
         println("--- 검증 성공: '$keyword'를 리스트에 담습니다 ---")
-        return listOf(OpenApiIngredientResponse(name = keyword, Source.OPEN_API))
+        return listOf(IngredientResponse(null, null, name = keyword, Source.OPEN_API))
     }
 }

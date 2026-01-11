@@ -5,7 +5,7 @@ import com.example.home_recipe.domain.ingredient.Ingredient
 object IngredientResponseAssembler {
     fun toIngredientResponse(ingredient: Ingredient): IngredientResponse {
         return IngredientResponse(
-            requireNotNull(ingredient.id),
+            ingredient.id,
             ingredient.category,
             ingredient.name,
             Source.DATABASE

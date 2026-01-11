@@ -14,7 +14,8 @@ import org.springframework.transaction.annotation.Transactional
 
 @Service
 class IngredientService(
-    private val ingredientRepository: IngredientRepository
+    private val ingredientRepository: IngredientRepository,
+    private val openApiIngredientService: OpenApiIngredientService
 ) {
 
     @Transactional
@@ -52,10 +53,15 @@ class IngredientService(
         return IngredientResponseAssembler.toIngredientResponse(ingredient)
     }
 
-    @Transactional(readOnly = true)
-    fun findIngredientsContainingName(name: String): List<IngredientResponse> {
+
+    suspend fun findIngredientsContainingName(name: String): List<IngredientResponse> {
         val ingredients = ingredientRepository.findIngredientContainingName(name)
-        return IngredientResponseAssembler.toIngredientResponseList(ingredients)
+
+        if(ingredients.isNotEmpty()) {
+            return IngredientResponseAssembler.toIngredientResponseList(ingredients)
+        }
+
+        return openApiIngredientService.searchExternalFood(name)
     }
 }
 
