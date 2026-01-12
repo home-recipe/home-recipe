@@ -28,7 +28,7 @@ class AuthService(
         val accessToken = jwtTokenProvider.createAccessToken(user.email)
         val refreshToken = jwtTokenProvider.createRefreshToken(user.email)
         tokenService.synchronizeRefreshToken(user, refreshToken)
-        return LoginResponse(accessToken, refreshToken)
+        return LoginResponse(accessToken, refreshToken, user.role)
     }
 
     private fun checkPassword(rawPassword: String, encryptedPassword: String) {

@@ -14,16 +14,15 @@ import com.example.home_recipe.service.ingredient.IngredientService
 import com.fasterxml.jackson.databind.ObjectMapper
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
-import org.mockito.Mock
 import org.mockito.kotlin.any
 import org.mockito.kotlin.doAnswer
 import org.mockito.kotlin.wheneverBlocking
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc
 import org.springframework.boot.test.context.SpringBootTest
-import org.springframework.boot.test.mock.mockito.MockBean
 import org.springframework.http.HttpStatus
 import org.springframework.security.oauth2.jwt.Jwt
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken
@@ -51,7 +50,7 @@ class IngredientControllerTest {
     @Autowired
     lateinit var userRepository: UserRepository
 
-    @MockBean
+    @Autowired
     lateinit var ingredientService: IngredientService
 
     @Autowired
@@ -71,15 +70,15 @@ class IngredientControllerTest {
 
     @Test
     @DisplayName("재료 조회하기 성공")
-    fun findIngredients_success() {
+    fun findIngredients_success() = runTest {
         // given
         val email = "create1@example.com"
         val auth = funGetAuth(email)
 
-        ingredientRepository.save(Ingredient(IngredientCategory.MEAT, "소고기"))
-        ingredientRepository.save(Ingredient(IngredientCategory.MEAT, "돼지고기"))
-        ingredientRepository.save(Ingredient(IngredientCategory.MEAT, "사슴고기"))
-        ingredientRepository.save(Ingredient(IngredientCategory.VEGETABLE, "당근"))
+        ingredientRepository.saveAndFlush(Ingredient(IngredientCategory.MEAT, "소고기"))
+        ingredientRepository.saveAndFlush(Ingredient(IngredientCategory.MEAT, "돼지고기"))
+        ingredientRepository.saveAndFlush(Ingredient(IngredientCategory.MEAT, "사슴고기"))
+        ingredientRepository.saveAndFlush(Ingredient(IngredientCategory.VEGETABLE, "당근"))
 
         // 2. When & Then: 호출 및 검증F
         val mvcResult = mockMvc.perform(
@@ -91,6 +90,7 @@ class IngredientControllerTest {
             .andReturn()
 
         mockMvc.perform(asyncDispatch(mvcResult))
+            .andDo(print())
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.response.data").isArray)
             .andExpect(jsonPath("$.response.data.length()").value(3))
