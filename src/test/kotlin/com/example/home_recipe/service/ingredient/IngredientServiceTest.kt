@@ -2,11 +2,14 @@ package com.example.home_recipe.service.ingredient
 
 import com.example.home_recipe.controller.ingredient.dto.request.CreateIngredientRequest
 import com.example.home_recipe.controller.ingredient.dto.request.UpdateIngredientRequest
+import com.example.home_recipe.controller.ingredient.dto.response.IngredientResponse
+import com.example.home_recipe.controller.ingredient.dto.response.Source
 import com.example.home_recipe.domain.ingredient.Ingredient
 import com.example.home_recipe.domain.ingredient.IngredientCategory
 import com.example.home_recipe.global.exception.BusinessException
 import com.example.home_recipe.global.response.code.IngredientCode
 import com.example.home_recipe.repository.IngredientRepository
+import kotlinx.coroutines.test.runTest
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.Assertions
@@ -19,6 +22,7 @@ import org.mockito.junit.jupiter.MockitoExtension
 import org.mockito.kotlin.any
 import org.mockito.kotlin.doAnswer
 import org.mockito.kotlin.whenever
+import org.mockito.kotlin.wheneverBlocking
 import org.springframework.test.context.ActiveProfiles
 import java.util.*
 
@@ -27,6 +31,8 @@ import java.util.*
 class IngredientServiceTest {
 
     @Mock lateinit var ingredientRepository: IngredientRepository
+
+    @Mock lateinit var openApiIngredientService: OpenApiIngredientService
 
     @InjectMocks
     lateinit var ingredientService: IngredientService
@@ -117,27 +123,33 @@ class IngredientServiceTest {
     }
 
     @Test
-    @DisplayName("재료 조회하기 - 단어 검색 시 단어가 포함된 재료를 가져오는지 테스트")
-    fun find_ingrdients_containing_name() {
+    @DisplayName("재료 조회하기 - DB에 단어가 존재할 경우 DB에서 먼저 조회 후 반환")
+    fun find_ingrdients_containing_name() = runTest {
         val grain1 = Ingredient(IngredientCategory.GRAIN, "쌀").apply { id = 7L }
         val grain2 = Ingredient(IngredientCategory.GRAIN, "햅쌀").apply { id = 8L }
         val grain3 = Ingredient(IngredientCategory.GRAIN, "찹쌀").apply { id = 8L }
         val grains = listOf(grain1, grain2, grain3)
+
         whenever(ingredientRepository.findIngredientContainingName(any())).thenReturn(grains)
 
         val result = ingredientService.findIngredientsContainingName("쌀")
 
         Assertions.assertEquals(3, result.size);
+        Assertions.assertEquals(Source.DATABASE, result.get(0).source)
     }
 
     @Test
-    @DisplayName("재료 조회하기 - 조회되는 단어가 없다면 빈 리스트 반환하는지 확인")
-    fun find_ingrdients_containing_name_isEmpty() {
+    @DisplayName("재료 조회하기 - 조회되는 단어가 없다면 openApi 조회 후 반환")
+    fun find_ingrdients_containing_name_isEmpty() = runTest{
        val meats = emptyList<Ingredient>()
         whenever(ingredientRepository.findIngredientContainingName(any())).thenReturn(meats)
 
+        val food = listOf(IngredientResponse(null, null, "고기", Source.OPEN_API))
+        wheneverBlocking { openApiIngredientService.searchExternalFood(any()) }.thenReturn(food)
+
         val result = ingredientService.findIngredientsContainingName("고기")
 
-        Assertions.assertEquals(0, result.size);
+        Assertions.assertEquals(1, result.size);
+        Assertions.assertEquals(Source.OPEN_API, result.get(0).source)
     }
 }
