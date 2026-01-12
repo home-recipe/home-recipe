@@ -1,6 +1,7 @@
 package com.example.home_recipe.service.refrigerator
 
 import com.example.home_recipe.controller.ingredient.dto.response.IngredientResponse
+import com.example.home_recipe.controller.ingredient.dto.response.Source
 import com.example.home_recipe.controller.refrigerator.dto.UserJoinedEvent
 import com.example.home_recipe.controller.refrigerator.dto.response.RefrigeratorResponse
 import com.example.home_recipe.domain.ingredient.BasicIngredients
@@ -14,7 +15,6 @@ import com.example.home_recipe.global.response.code.UserCode
 import com.example.home_recipe.repository.IngredientRepository
 import com.example.home_recipe.repository.RefrigeratorRepository
 import com.example.home_recipe.repository.UserRepository
-import org.slf4j.LoggerFactory
 import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Propagation
@@ -114,7 +114,8 @@ class RefrigeratorService(
         IngredientResponse(
             id = requireNotNull(this.id),
             category = this.category,
-            name = this.name
+            name = this.name,
+            Source.DATABASE
         )
 
     @Transactional(readOnly = true)
