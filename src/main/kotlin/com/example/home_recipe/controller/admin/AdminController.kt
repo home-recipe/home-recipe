@@ -12,8 +12,8 @@ import org.springframework.security.core.Authentication
 import org.springframework.web.bind.annotation.*
 
 @RestController
-@RequestMapping("/api/manage")
-class ManageController(
+@RequestMapping("/api/admin")
+class AdminController(
     private val manageService: ManageService
 ) {
 
@@ -30,7 +30,4 @@ class ManageController(
         val result = manageService.updateUserRole(updateRoleRequest.id, updateRoleRequest.role)
         return ApiResponse.success(result, AuthCode.MANAGE_SUCCESS_002, HttpStatus.OK)
     }
-
-//    @GetMapping("/videos")
-//    fun getRandomVideos(authentication: Authentication)
 }
