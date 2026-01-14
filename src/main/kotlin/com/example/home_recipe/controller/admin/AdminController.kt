@@ -1,7 +1,7 @@
 package com.example.home_recipe.controller.admin
 
 import com.example.home_recipe.controller.admin.request.UpdateRoleRequest
-import com.example.home_recipe.controller.admin.response.ManageUserResponse
+import com.example.home_recipe.controller.admin.response.AdminUserResponse
 import com.example.home_recipe.global.response.ApiResponse
 import com.example.home_recipe.global.response.code.AuthCode
 import com.example.home_recipe.service.auth.ManageService
@@ -18,7 +18,7 @@ class AdminController(
 ) {
 
     @GetMapping("/users")
-    fun getAllUsers(authentication: Authentication): ResponseEntity<ApiResponse<List<ManageUserResponse>>> {
+    fun getAllUsers(authentication: Authentication): ResponseEntity<ApiResponse<List<AdminUserResponse>>> {
         return ApiResponse.success(manageService.getAllUsers(), AuthCode.MANAGE_SUCCESS_001, HttpStatus.OK)
     }
 
@@ -26,7 +26,7 @@ class AdminController(
     fun updateUserRole(
         authentication: Authentication,
         @Valid @RequestBody updateRoleRequest: UpdateRoleRequest
-    ): ResponseEntity<ApiResponse<ManageUserResponse>> {
+    ): ResponseEntity<ApiResponse<AdminUserResponse>> {
         val result = manageService.updateUserRole(updateRoleRequest.id, updateRoleRequest.role)
         return ApiResponse.success(result, AuthCode.MANAGE_SUCCESS_002, HttpStatus.OK)
     }

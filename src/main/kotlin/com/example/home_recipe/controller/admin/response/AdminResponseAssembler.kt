@@ -2,10 +2,10 @@ package com.example.home_recipe.controller.admin.response
 
 import com.example.home_recipe.domain.user.User
 
-object ManageResponseAssembler {
+object AdminResponseAssembler {
 
-    fun toUserResponse(user: User): ManageUserResponse {
-        return ManageUserResponse(
+    fun toUserResponse(user: User): AdminUserResponse {
+        return AdminUserResponse(
             requireNotNull(user.id),
             user.name,
             user.email,
@@ -13,9 +13,9 @@ object ManageResponseAssembler {
         )
     }
 
-    fun toUsersResponse(users: List<User>): List<ManageUserResponse> {
+    fun toUsersResponse(users: List<User>): List<AdminUserResponse> {
         return users.map { user ->
-            ManageUserResponse(
+            AdminUserResponse(
                 id = requireNotNull(user.id),
                 name = user.name,
                 email = user.email,
