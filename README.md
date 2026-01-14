@@ -15,15 +15,17 @@
 
 나의 냉장고 속 재료들을 토대로 오늘 맛있게 먹을 여러가지 레시피를 추천해드려요!
 
-(프론트 사진)
+![KakaoTalk_20260114_131128385 (1)](https://github.com/user-attachments/assets/c87bf4cb-202f-47ac-90ea-7b71848e1ba1)
+
 
 <br>
 
-**재료가 없다고 실망하지 마세요! 어떤 재료를 더 사와야 할지도 알려준답니다!**
+**재료가 없다고 실망하지 마세요! 다양한 재료들을 직접 추가해보세요!**
 
-내가 가진 재료에 더해 추가적인 재료를 필요로 하는 요리 레시피도 추천해드려요!
+내가 가진 재료를 나만의 냉장고에 채워보세요!
 
-(프론트 사진)
+![KakaoTalk_20260114_121441125](https://github.com/user-attachments/assets/98e1e939-07bd-495e-a97c-20afb94a73f2)
+
 
 <br>
 
@@ -35,7 +37,8 @@
 - Springboot 3.5.7
 - Mysql 8
 
-(기술 스택 사진 모음)
+<img width="580" height="282" alt="image" src="https://github.com/user-attachments/assets/365bf8ca-2350-4ab1-a151-7bb25ff82adc" />
+
 
 
 ### 프론트엔드
@@ -46,7 +49,8 @@
 
 ### 인프라 아키텍처
 
-(아키텍처 사진)
+ <img width="1031" height="492" alt="image" src="https://github.com/user-attachments/assets/32c9065c-50d6-464d-9af0-580ae3261a38" />
+
 
 ### 백엔드 CI/CD
 
