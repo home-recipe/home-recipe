@@ -1,5 +1,6 @@
 package com.example.home_recipe.domain.auth.config
 
+import com.example.home_recipe.domain.user.Role
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
@@ -74,7 +75,7 @@ class SecurityConfig(
                     "/api/auth/logout",
                     "/actuator/**"
                 ).permitAll()
-
+                it.requestMatchers("/api/admin/**").hasRole(Role.ADMIN.name)
                 it.anyRequest().authenticated()
             }
 
