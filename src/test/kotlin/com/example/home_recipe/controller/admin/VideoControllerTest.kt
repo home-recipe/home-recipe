@@ -1,6 +1,7 @@
 package com.example.home_recipe.controller.admin
 
 import com.example.home_recipe.repository.UserRepository
+import com.example.home_recipe.service.admin.VideoService
 import jakarta.transaction.Transactional
 import org.hamcrest.CoreMatchers.containsString
 import org.junit.jupiter.api.BeforeEach
@@ -32,18 +33,18 @@ class VideoControllerTest {
     @Autowired
     private lateinit var mockMvc: MockMvc
 
-    @Autowired
-    private lateinit var userRepository: UserRepository
-
     @TempDir
     private lateinit var tempDir: Path
 
     @Autowired
     private lateinit var controller: VideoController
 
+    @Autowired
+    private lateinit var videoService: VideoService
+
     @BeforeEach
     fun setUp() {
-        ReflectionTestUtils.setField(controller, "videoPath", tempDir.toString())
+        ReflectionTestUtils.setField(videoService, "videoPath", tempDir.toString())
     }
 
 
