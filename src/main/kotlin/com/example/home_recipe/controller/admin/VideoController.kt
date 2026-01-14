@@ -18,18 +18,20 @@ class VideoController {
     private val videoPath = "/Users/mikyeong/home_recipe_assets/videos"
 
     @GetMapping
-    fun getRandomVideos(authentication: Authentication): List<String> {
+    fun getRandomVideos(authentication: Authentication): ResponseEntity<ApiResponse<List<String>>> {
         val directory = File(videoPath)
 
         if (!directory.exists()) {
-            return emptyList()
+            return ApiResponse.success(emptyList(), VideoCode.VIDEO_003, HttpStatus.OK)
         }
-        return directory.listFiles { _, name ->
+        val result = directory.listFiles { _, name ->
             val extension = name.lowercase()
             extension.endsWith(".mp4") || extension.endsWith(".mov")
         }?.map {
             "http://localhost:8080/videos/${it.name}"
         }?.shuffled() ?: emptyList()
+
+        return ApiResponse.success(result, VideoCode.VIDEO_003, HttpStatus.OK)
     }
 
     @PostMapping("/video")
