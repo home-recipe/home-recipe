@@ -4,6 +4,7 @@ import com.example.home_recipe.repository.UserRepository
 import com.example.home_recipe.service.admin.VideoService
 import jakarta.transaction.Transactional
 import org.hamcrest.CoreMatchers.containsString
+import org.hamcrest.CoreMatchers.hasItem
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
@@ -81,7 +82,8 @@ class VideoControllerTest {
 
         mockMvc.perform(get("/api/videos"))
             .andExpect(status().isOk)
-            .andExpect(jsonPath("$.response.data.length()").value(2))
-            .andExpect(jsonPath("$.response.data[0]").value(containsString("http://localhost:8080/videos/sample2.mov")))
+            .andExpect(jsonPath("$.response.data.size()").value(2))
+            .andExpect(jsonPath("$.response.data").value(hasItem(containsString("sample1.mp4"))))
+            .andExpect(jsonPath("$.response.data").value(hasItem(containsString("sample2.mov"))))
     }
 }
