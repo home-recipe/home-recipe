@@ -1,5 +1,6 @@
 package com.example.home_recipe.domain.auth.config
 
+import com.example.home_recipe.domain.user.Role
 import com.example.home_recipe.global.exception.BusinessException
 import com.example.home_recipe.global.response.code.AuthCode
 import io.jsonwebtoken.ExpiredJwtException
@@ -22,19 +23,20 @@ class JwtTokenProvider(
 ) {
     private val key = Keys.hmacShaKeyFor(secretKey.toByteArray())
 
-    fun createAccessToken(email: String): String {
-        return createToken(email, accessTokenValidity)
+    fun createAccessToken(email: String, role: Role): String {
+        return createToken(email, role.name, accessTokenValidity)
     }
 
-    fun createRefreshToken(email: String): String {
-        return createToken(email, refreshTokenValidity)
+    fun createRefreshToken(email: String, role: Role): String {
+        return createToken(email, role.name, refreshTokenValidity)
     }
 
-    private fun createToken(email: String, validity: Long): String {
+    private fun createToken(email: String, role: String, validity: Long): String {
         val now = Date()
         val expiration = Date(now.time + validity)
         return Jwts.builder()
             .setSubject(email)
+            .claim("role", role)
             .setIssuedAt(now)
             .setExpiration(expiration)
             .signWith(key, SignatureAlgorithm.HS256)

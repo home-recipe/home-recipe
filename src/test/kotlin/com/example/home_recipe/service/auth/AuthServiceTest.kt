@@ -1,23 +1,19 @@
 package com.example.home_recipe.service.auth
 
 import com.example.home_recipe.controller.user.dto.request.JoinRequest
-import com.example.home_recipe.controller.user.dto.request.LoginRequest
+import com.example.home_recipe.controller.auth.dto.request.LoginRequest
 import com.example.home_recipe.controller.user.dto.response.JoinResponse
-import com.example.home_recipe.domain.auth.config.JwtTokenProvider
 import com.example.home_recipe.global.exception.BusinessException
 import com.example.home_recipe.repository.RefreshTokenRepository
-import com.example.home_recipe.repository.UserRepository
 import com.example.home_recipe.service.user.UserService
 import jakarta.persistence.EntityManager
 import jakarta.transaction.Transactional
 import org.assertj.core.api.Assertions
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.assertAll
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
-import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.test.context.ActiveProfiles
 import kotlin.test.Test
 
