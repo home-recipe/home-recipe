@@ -1,4 +1,4 @@
-package com.example.home_recipe.service.auth
+package com.example.home_recipe.service.admin
 
 import com.example.home_recipe.controller.admin.response.AdminResponseAssembler
 import com.example.home_recipe.controller.admin.response.AdminUserResponse
@@ -11,7 +11,7 @@ import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
 @Service
-class ManageService(
+class AdminService(
     private val userRepository: UserRepository
 ) {
 
@@ -26,6 +26,4 @@ class ManageService(
             .orElseThrow { BusinessException(UserCode.LOGIN_ERROR_002, HttpStatus.UNAUTHORIZED) }
         return AdminResponseAssembler.toUserResponse(user.updateRole(role))
     }
-
-
 }
