@@ -10,6 +10,7 @@ import org.springframework.security.authentication.AbstractAuthenticationToken
 import org.springframework.security.config.annotation.web.builders.HttpSecurity
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity
 import org.springframework.security.config.http.SessionCreationPolicy
+import org.springframework.security.core.authority.SimpleGrantedAuthority
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder
 import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.security.oauth2.jwt.Jwt
@@ -45,7 +46,9 @@ class SecurityConfig(
     fun jwtAuthenticationConverter(): Converter<Jwt, AbstractAuthenticationToken> {
         return Converter { jwt ->
             val email = jwt.getClaim<String>(EMAIL) ?: jwt.subject
-            JwtAuthenticationToken(jwt, emptyList(), email)
+            val role = jwt.getClaim<String>("role") ?: "ROLE_USER"
+            val authorities = listOf(SimpleGrantedAuthority(role))
+            JwtAuthenticationToken(jwt, authorities, email)
         }
     }
 
