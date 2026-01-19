@@ -78,7 +78,6 @@ class SecurityConfig(
                     "/api/user/**",
                     "/api/auth/reissue",
                     "/api/auth/login",
-                    "/api/auth/logout",
                     "/actuator/**"
                 ).permitAll()
                 it.requestMatchers("/api/admin/**").hasRole(Role.ADMIN.name)
