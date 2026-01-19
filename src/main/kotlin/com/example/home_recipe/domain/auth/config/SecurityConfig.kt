@@ -46,8 +46,11 @@ class SecurityConfig(
     fun jwtAuthenticationConverter(): Converter<Jwt, AbstractAuthenticationToken> {
         return Converter { jwt ->
             val email = jwt.getClaim<String>(EMAIL) ?: jwt.subject
-            val role = jwt.getClaim<String>("role") ?: "ROLE_USER"
-            val authorities = listOf(SimpleGrantedAuthority(role))
+            val rawRole = jwt.getClaim<String>("role") ?: "USER"
+
+            val authority = if (rawRole.startsWith("ROLE_")) rawRole else "ROLE_$rawRole"
+            val authorities = listOf(SimpleGrantedAuthority(authority))
+
             JwtAuthenticationToken(jwt, authorities, email)
         }
     }
