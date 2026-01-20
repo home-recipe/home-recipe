@@ -80,7 +80,10 @@ class SecurityConfig(
                     "/api/auth/login",
                     "/actuator/**"
                 ).permitAll()
-                it.requestMatchers("/api/admin/**").hasRole(Role.ADMIN.name)
+                it.requestMatchers(
+                    "/api/admin/**",
+                    "/api/videos/**"
+                ).hasRole(Role.ADMIN.name)
                 it.anyRequest().authenticated()
             }
 
