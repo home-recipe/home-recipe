@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.*
 import org.springframework.web.multipart.MultipartFile
 
 @RestController
-@RequestMapping("/api/videos")
+@RequestMapping("/api/admin")
 class VideoController(
     private val videoService: VideoService
 ) {
