@@ -1,5 +1,6 @@
 package com.example.home_recipe.domain.auth.config
 
+import com.example.home_recipe.domain.user.Role
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
@@ -9,6 +10,7 @@ import org.springframework.security.authentication.AbstractAuthenticationToken
 import org.springframework.security.config.annotation.web.builders.HttpSecurity
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity
 import org.springframework.security.config.http.SessionCreationPolicy
+import org.springframework.security.core.authority.SimpleGrantedAuthority
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder
 import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.security.oauth2.jwt.Jwt
@@ -44,7 +46,12 @@ class SecurityConfig(
     fun jwtAuthenticationConverter(): Converter<Jwt, AbstractAuthenticationToken> {
         return Converter { jwt ->
             val email = jwt.getClaim<String>(EMAIL) ?: jwt.subject
-            JwtAuthenticationToken(jwt, emptyList(), email)
+            val rawRole = jwt.getClaim<String>("role") ?: "USER"
+
+            val authority = if (rawRole.startsWith("ROLE_")) rawRole else "ROLE_$rawRole"
+            val authorities = listOf(SimpleGrantedAuthority(authority))
+
+            JwtAuthenticationToken(jwt, authorities, email)
         }
     }
 
@@ -72,9 +79,9 @@ class SecurityConfig(
                     "/api/auth/reissue",
                     "/api/auth/login",
                     "/api/auth/logout",
-                    "/actuator/**",
+                    "/actuator/**"
                 ).permitAll()
-
+                it.requestMatchers("/api/admin/**").hasRole(Role.ADMIN.name)
                 it.anyRequest().authenticated()
             }
 

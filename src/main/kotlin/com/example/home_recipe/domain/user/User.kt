@@ -53,6 +53,11 @@ class User(
 
     fun hasRefrigerator(): Boolean = refrigerator != null
 
+    fun updateRole(role: Role) : User {
+        this.role = role;
+        return this;
+    }
+
     val refrigeratorExternal: Refrigerator
         get() = refrigerator
             ?: throw IllegalStateException(
