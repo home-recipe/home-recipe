@@ -2,10 +2,11 @@ package com.example.home_recipe.service.auth
 
 import com.example.home_recipe.controller.auth.dto.response.LoginResponse
 import com.example.home_recipe.controller.auth.dto.response.AccessTokenResponse
-import com.example.home_recipe.controller.user.dto.request.LoginRequest
+import com.example.home_recipe.controller.auth.dto.request.LoginRequest
 import com.example.home_recipe.domain.auth.config.JwtTokenProvider
 import com.example.home_recipe.global.exception.BusinessException
 import com.example.home_recipe.global.response.code.AuthCode
+import com.example.home_recipe.global.response.code.IngredientCode
 import com.example.home_recipe.global.response.code.UserCode
 import com.example.home_recipe.service.user.UserService
 import jakarta.transaction.Transactional
@@ -25,10 +26,10 @@ class AuthService(
         val user = userService.getUser(request.email)
         checkPassword(request.password, user.password)
 
-        val accessToken = jwtTokenProvider.createAccessToken(user.email)
-        val refreshToken = jwtTokenProvider.createRefreshToken(user.email)
+        val accessToken = jwtTokenProvider.createAccessToken(user.email, user.role)
+        val refreshToken = jwtTokenProvider.createRefreshToken(user.email, user.role)
         tokenService.synchronizeRefreshToken(user, refreshToken)
-        return LoginResponse(accessToken, refreshToken)
+        return LoginResponse(accessToken, refreshToken, user.role)
     }
 
     private fun checkPassword(rawPassword: String, encryptedPassword: String) {
@@ -39,11 +40,8 @@ class AuthService(
 
     @Transactional
     fun reissueAccessToken(email: String): AccessTokenResponse {
-        val isExistUser = userService.isExistUser(email)
-        if(!isExistUser) {
-            throw BusinessException(AuthCode.AUTH_INVALID_TOKEN, HttpStatus.UNAUTHORIZED)
-        }
-        val accessToken = jwtTokenProvider.createAccessToken(email)
+        val user = userService.getUser(email)
+        val accessToken = jwtTokenProvider.createAccessToken(email, user.role)
         return AccessTokenResponse(accessToken)
     }
 
