@@ -2,7 +2,7 @@
 <h1> 우리집에서 지금 당장 만들 수 있는 레시피</h1>
 </div>
 <p align="center">
-    (서비스 메인 로고 사진)
+    <img width="213" height="61" alt="화면 캡처 2026-01-25 123856" src="https://github.com/user-attachments/assets/11f836fa-bc8a-4457-8240-800d2ec2b686" />
 </p>
 
 ## 프로젝트 소개
