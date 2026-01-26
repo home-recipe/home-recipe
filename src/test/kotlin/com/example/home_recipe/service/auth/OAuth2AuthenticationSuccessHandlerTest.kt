@@ -18,10 +18,11 @@ import org.mockito.kotlin.whenever
 import org.springframework.mock.web.MockHttpServletResponse
 import org.springframework.security.core.Authentication
 import org.springframework.security.oauth2.core.user.OAuth2User
+import org.springframework.test.context.ActiveProfiles
 import java.util.*
 
+@ActiveProfiles("test-local")
 class OAuth2AuthenticationSuccessHandlerTest {
-
     private val userRepository: UserRepository = mock()
     private val jwtTokenProvider: JwtTokenProvider = mock()
     private val tokenService: TokenService = mock()
