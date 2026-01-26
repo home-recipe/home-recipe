@@ -4,7 +4,6 @@ import com.example.home_recipe.global.exception.BusinessException
 import com.example.home_recipe.global.response.code.AuthCode
 import org.springframework.http.HttpStatus
 
-
 object OAuth2UserInfoFactory {
 
     fun from(

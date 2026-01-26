@@ -4,15 +4,10 @@ import com.example.home_recipe.controller.user.dto.request.JoinRequest
 import com.example.home_recipe.domain.auth.oauth2.OAuth2Constants
 import com.example.home_recipe.domain.auth.oauth2.OAuth2UserInfoFactory
 import com.example.home_recipe.domain.user.User
-import com.example.home_recipe.global.exception.BusinessException
-import com.example.home_recipe.global.response.code.AuthCode
 import com.example.home_recipe.service.user.UserService
-import org.hibernate.validator.internal.util.logging.LoggerFactory
-import org.springframework.http.HttpStatus
 import org.springframework.security.core.authority.SimpleGrantedAuthority
 import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService
 import org.springframework.security.oauth2.client.userinfo.OAuth2UserRequest
-import org.springframework.security.oauth2.core.OAuth2AuthenticationException
 import org.springframework.security.oauth2.core.user.DefaultOAuth2User
 import org.springframework.security.oauth2.core.user.OAuth2User
 import org.springframework.stereotype.Service
