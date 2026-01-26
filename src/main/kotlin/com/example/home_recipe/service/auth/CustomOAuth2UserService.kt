@@ -26,10 +26,10 @@ class CustomOAuth2UserService(
         val name: String = userInfo.name
         val user: User = findOrCreateUser(email, name)
         val attributes: MutableMap<String, Any> = HashMap(oAuth2User.attributes)
-        attributes[OAuth2Constants.ATTRIBUTE_LOCAL_EMAIL] = user.email
+        attributes[OAuth2Constants.EMAIL] = user.email
         val authorities = listOf(SimpleGrantedAuthority(OAuth2Constants.ROLE_PREFIX + user.role.name))
 
-        return DefaultOAuth2User(authorities, attributes, OAuth2Constants.ATTRIBUTE_LOCAL_EMAIL)
+        return DefaultOAuth2User(authorities, attributes, OAuth2Constants.EMAIL)
     }
 
     private fun findOrCreateUser(
