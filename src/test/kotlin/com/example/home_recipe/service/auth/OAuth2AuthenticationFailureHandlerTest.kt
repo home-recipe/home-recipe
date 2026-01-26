@@ -9,7 +9,6 @@ import org.junit.jupiter.api.Test
 import org.mockito.kotlin.mock
 import org.springframework.mock.web.MockHttpServletResponse
 import org.springframework.security.authentication.BadCredentialsException
-import org.springframework.test.context.ActiveProfiles
 
 class OAuth2AuthenticationFailureHandlerTest {
     private val handler = OAuth2AuthenticationFailureHandler()
