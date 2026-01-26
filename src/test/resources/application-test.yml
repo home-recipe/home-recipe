@@ -17,11 +17,3 @@ jwt:
   secret: homerecipealkfjlqwalnfjkehfljqlkjl1j2lk312jl
   access-expiration: 3600000
   refresh-expiration: 604800000
-
-external-api:
-  raw-food:
-    url: http://api.data.go.kr/openapi/tn_pubr_public_nutri_material_info_api
-    service-key: e2f941fb7088adea81c92afa884097fbbfc22ac2532a1ae5cbff322f633a3a2a
-  process-food:
-    url: http://api.data.go.kr/openapi/tn_pubr_public_nutri_process_info_api
-    service-key: e2f941fb7088adea81c92afa884097fbbfc22ac2532a1ae5cbff322f633a3a2a
