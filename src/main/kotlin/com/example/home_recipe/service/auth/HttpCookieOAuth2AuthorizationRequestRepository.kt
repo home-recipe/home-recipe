@@ -10,15 +10,18 @@ import org.springframework.stereotype.Component
 import java.util.*
 
 @Component
-class HttpCookieOAuth2AuthorizationRequestRepository : AuthorizationRequestRepository<OAuth2AuthorizationRequest> {
+class HttpCookieOAuth2AuthorizationRequestRepository :
+    AuthorizationRequestRepository<OAuth2AuthorizationRequest> {
 
     companion object {
         private const val COOKIE_NAME = "OAUTH2_AUTH_REQUEST"
         private const val COOKIE_EXPIRE_SECONDS = 180
+        private const val COOKIE_PATH = "/"
+        private const val EMPTY_VALUE = ""
     }
 
     override fun loadAuthorizationRequest(request: HttpServletRequest): OAuth2AuthorizationRequest? {
-        val cookie = request.cookies?.firstOrNull { it.name == COOKIE_NAME } ?: return null
+        val cookie: Cookie = request.cookies?.firstOrNull { it.name == COOKIE_NAME } ?: return null
         return deserialize(cookie.value)
     }
 
@@ -31,7 +34,9 @@ class HttpCookieOAuth2AuthorizationRequestRepository : AuthorizationRequestRepos
             deleteCookie(response)
             return
         }
-        val value = serialize(authorizationRequest)
+
+        val value: String = serialize(authorizationRequest)
+
         addCookie(response, value)
     }
 
@@ -39,39 +44,51 @@ class HttpCookieOAuth2AuthorizationRequestRepository : AuthorizationRequestRepos
         request: HttpServletRequest,
         response: HttpServletResponse
     ): OAuth2AuthorizationRequest? {
-        val authRequest = loadAuthorizationRequest(request)
+        val authRequest: OAuth2AuthorizationRequest? = loadAuthorizationRequest(request)
+
         deleteCookie(response)
+
         return authRequest
     }
 
-    fun removeAuthorizationRequestCookies(request: HttpServletRequest, response: HttpServletResponse) {
+    fun removeAuthorizationRequestCookies(
+        request: HttpServletRequest,
+        response: HttpServletResponse
+    ) {
         deleteCookie(response)
     }
 
-    private fun addCookie(response: HttpServletResponse, value: String) {
+    private fun addCookie(
+        response: HttpServletResponse,
+        value: String
+    ) {
         val cookie = Cookie(COOKIE_NAME, value).apply {
-            isHttpOnly = true
-            path = "/"
-            maxAge = COOKIE_EXPIRE_SECONDS
-        }
+                isHttpOnly = true
+                path = COOKIE_PATH
+                maxAge = COOKIE_EXPIRE_SECONDS
+            }
+
         response.addCookie(cookie)
     }
 
     private fun deleteCookie(response: HttpServletResponse) {
-        val cookie = Cookie(COOKIE_NAME, "").apply {
-            path = "/"
-            maxAge = 0
-        }
+        val cookie = Cookie(COOKIE_NAME, EMPTY_VALUE).apply {
+                path = COOKIE_PATH
+                maxAge = 0
+            }
+
         response.addCookie(cookie)
     }
 
     private fun serialize(obj: OAuth2AuthorizationRequest): String {
-        val bytes = SerializationUtils.serialize(obj)
+        val bytes: ByteArray = SerializationUtils.serialize(obj)
+
         return Base64.getUrlEncoder().encodeToString(bytes)
     }
 
     private fun deserialize(value: String): OAuth2AuthorizationRequest {
-        val bytes = Base64.getUrlDecoder().decode(value)
+        val bytes: ByteArray = Base64.getUrlDecoder().decode(value)
+
         return SerializationUtils.deserialize(bytes) as OAuth2AuthorizationRequest
     }
 }
