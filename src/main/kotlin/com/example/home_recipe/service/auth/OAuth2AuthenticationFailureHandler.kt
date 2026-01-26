@@ -37,5 +37,6 @@ class OAuth2AuthenticationFailureHandler : AuthenticationFailureHandler {
         val body = entity.body
 
         response.writer.write(objectMapper.writeValueAsString(body))
+        response.writer.flush()
     }
 }

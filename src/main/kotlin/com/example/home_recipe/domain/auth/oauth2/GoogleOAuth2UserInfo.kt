@@ -5,6 +5,6 @@ class GoogleOAuth2UserInfo(
 ) : OAuth2UserInfo {
     override val provider: OAuth2Provider = OAuth2Provider.GOOGLE
     override val providerId: String = OAuth2AttributeValidator.requiredString(attributes = attributes, key = OAuth2Constants.ATTRIBUTE_SUB)
-    override val email: String = OAuth2AttributeValidator.requiredString(attributes = attributes, key = OAuth2Constants.ATTRIBUTE_EMAIL)
+    override val email: String = OAuth2AttributeValidator.requiredString(attributes = attributes, key = OAuth2Constants.EMAIL)
     override val name: String = OAuth2AttributeValidator.requiredString(attributes = attributes, key = OAuth2Constants.ATTRIBUTE_NAME)
 }
