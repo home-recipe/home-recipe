@@ -22,10 +22,16 @@ data class BasicIngredients(
             name = "쌀"
         )
 
+        val COOKING_OIL = BasicIngredients(
+            category = IngredientCategory.ETC,
+            name = "식용유"
+        )
+
         val DEFAULTS: List<BasicIngredients> = listOf(
             EGG,
             SOY_SAUCE,
-            RICE
+            RICE,
+            COOKING_OIL
         )
     }
 }
