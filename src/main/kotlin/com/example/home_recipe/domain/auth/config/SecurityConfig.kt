@@ -8,6 +8,7 @@ import com.example.home_recipe.service.auth.OAuth2AuthenticationSuccessHandler
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
+import org.springframework.core.annotation.Order
 import org.springframework.core.convert.converter.Converter
 import org.springframework.http.HttpMethod
 import org.springframework.security.authentication.AbstractAuthenticationToken
@@ -37,9 +38,6 @@ class SecurityConfig(
     companion object {
         const val JWT_SIGNATURE_ALGORITHM = "HmacSHA256"
         const val EMAIL = "email"
-        const val AUTHORIZATION = "authorization"
-        const val BEARER = "Bearer "
-        const val BEARER_LENGTH = 7;
     }
 
     @Bean
@@ -62,7 +60,39 @@ class SecurityConfig(
     }
 
     @Bean
-    fun filterChain(http: HttpSecurity): SecurityFilterChain {
+    @Order(1)
+    fun oauth2SecurityChain(http: HttpSecurity): SecurityFilterChain {
+        http
+            .securityMatcher("/oauth2/**", "/login/oauth2/**", "/error")
+            .csrf { it.disable() }
+            .formLogin { it.disable() }
+            .httpBasic { it.disable() }
+            .logout { it.disable() }
+            .sessionManagement {
+                it.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+            }
+            .authorizeHttpRequests {
+                it.anyRequest().permitAll()
+            }
+            .oauth2Login { oauth2 ->
+                oauth2
+                    .authorizationEndpoint { endpoint ->
+                        endpoint.authorizationRequestRepository(authorizationRequestRepository)
+                    }
+                    .userInfoEndpoint { userInfo ->
+                        userInfo.userService(oAuth2UserService)
+                    }
+                    .successHandler(oAuth2SuccessHandler)
+                    .failureHandler(oAuth2FailureHandler)
+            }
+
+        return http.build()
+    }
+
+
+    @Bean
+    @Order(2)
+    fun apiSecurityChain(http: HttpSecurity): SecurityFilterChain {
         http
             .csrf { it.disable() }
             .formLogin { it.disable() }
@@ -75,29 +105,14 @@ class SecurityConfig(
 
             .authorizeHttpRequests {
                 it.requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-                it.requestMatchers("/oauth2/**", "/login/oauth2/**").permitAll()
                 it.requestMatchers(
                     "/api/user/**",
                     "/api/auth/reissue",
                     "/api/auth/login",
                     "/actuator/**"
                 ).permitAll()
-                it.requestMatchers(
-                    "/api/admin/**"
-                ).hasRole(Role.ADMIN.name)
+                it.requestMatchers("/api/admin/**").hasRole(Role.ADMIN.name)
                 it.anyRequest().authenticated()
-            }
-
-            .oauth2Login { oauth2 ->
-                oauth2
-                    .authorizationEndpoint { endpoint ->
-                        endpoint.authorizationRequestRepository(authorizationRequestRepository)
-                    }
-                    .userInfoEndpoint { userInfo ->
-                        userInfo.userService(oAuth2UserService)
-                    }
-                    .successHandler(oAuth2SuccessHandler)
-                    .failureHandler(oAuth2FailureHandler)
             }
 
             .oauth2ResourceServer { oauth2 ->
