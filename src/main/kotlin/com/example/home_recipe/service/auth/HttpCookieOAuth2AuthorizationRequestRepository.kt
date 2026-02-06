@@ -58,26 +58,19 @@ class HttpCookieOAuth2AuthorizationRequestRepository :
         deleteCookie(response)
     }
 
-    private fun addCookie(
-        response: HttpServletResponse,
-        value: String
-    ) {
-        val cookie = Cookie(COOKIE_NAME, value).apply {
-                isHttpOnly = true
-                path = COOKIE_PATH
-                maxAge = COOKIE_EXPIRE_SECONDS
-            }
-
-        response.addCookie(cookie)
+    private fun addCookie(response: HttpServletResponse, value: String) {
+        // 기존 addCookie 대신 Set-Cookie를 직접 써서 SameSite 적용
+        response.addHeader(
+            "Set-Cookie",
+            "OAUTH2_AUTH_REQUEST=$value; Path=/; Max-Age=$COOKIE_EXPIRE_SECONDS; HttpOnly; Secure; SameSite=None"
+        )
     }
 
     private fun deleteCookie(response: HttpServletResponse) {
-        val cookie = Cookie(COOKIE_NAME, EMPTY_VALUE).apply {
-                path = COOKIE_PATH
-                maxAge = 0
-            }
-
-        response.addCookie(cookie)
+        response.addHeader(
+            "Set-Cookie",
+            "OAUTH2_AUTH_REQUEST=; Path=/; Max-Age=0; HttpOnly; Secure; SameSite=None"
+        )
     }
 
     private fun serialize(obj: OAuth2AuthorizationRequest): String {
