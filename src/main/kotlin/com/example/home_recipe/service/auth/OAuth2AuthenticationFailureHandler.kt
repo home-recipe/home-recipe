@@ -5,6 +5,7 @@ import com.example.home_recipe.global.response.code.AuthCode
 import com.fasterxml.jackson.databind.ObjectMapper
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
+import org.slf4j.LoggerFactory
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.security.core.AuthenticationException
@@ -13,7 +14,7 @@ import org.springframework.stereotype.Component
 
 @Component
 class OAuth2AuthenticationFailureHandler : AuthenticationFailureHandler {
-
+    private val log = LoggerFactory.getLogger(javaClass)
     private val objectMapper =
         ObjectMapper()
 
@@ -22,6 +23,12 @@ class OAuth2AuthenticationFailureHandler : AuthenticationFailureHandler {
         response: HttpServletResponse,
         exception: AuthenticationException
     ) {
+        log.error("OAuth2 login failed. uri={}, error={}",
+            request.requestURI,
+            exception.message,
+            exception
+        )
+
         val entity = ApiResponse.error<Unit>(
                 responseCode = AuthCode.AUTH_OAUTH2_LOGIN_FAILED,
                 status = HttpStatus.UNAUTHORIZED)
