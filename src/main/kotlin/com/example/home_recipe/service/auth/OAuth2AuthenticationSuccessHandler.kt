@@ -8,6 +8,7 @@ import com.example.home_recipe.global.response.code.AuthCode
 import com.example.home_recipe.global.response.code.BaseCode
 import com.example.home_recipe.repository.UserRepository
 import com.fasterxml.jackson.databind.ObjectMapper
+import jakarta.servlet.http.Cookie
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
 import org.springframework.http.HttpStatus
@@ -31,6 +32,7 @@ class OAuth2AuthenticationSuccessHandler(
         private const val ACCESS_TOKEN = "accessToken"
         private const val REFRESH_TOKEN = "refreshToken"
         private const val REDIRECT_URL = "https://recook.kr/login-callback"
+        private const val MAX_AGE = 604800
     }
 
     override fun onAuthenticationSuccess(
@@ -56,9 +58,17 @@ class OAuth2AuthenticationSuccessHandler(
             tokenService.synchronizeRefreshToken(user, refreshToken)
             authorizationRequestRepository.removeAuthorizationRequestCookies(request, response)
 
-            val targetUrl = UriComponentsBuilder.fromUriString(REDIRECT_URL).queryParam(ACCESS_TOKEN, accessToken)
-                .queryParam(REFRESH_TOKEN, refreshToken).build().toUriString()
+            val targetUrl = UriComponentsBuilder.fromUriString(REDIRECT_URL)
+                .queryParam(ACCESS_TOKEN, accessToken)
+                .build().toUriString()
 
+            val refreshTokenCookie = Cookie(REFRESH_TOKEN, refreshToken).apply {
+                isHttpOnly = true
+                secure = true
+                path = "/"
+                maxAge = MAX_AGE
+            }
+            response.addCookie(refreshTokenCookie)
             response.sendRedirect(targetUrl)
         } catch (ex: BusinessException) {
             writeError(
