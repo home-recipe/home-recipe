@@ -1,6 +1,5 @@
 package com.example.home_recipe.service.auth
 
-import com.example.home_recipe.controller.auth.dto.response.LoginResponse
 import com.example.home_recipe.domain.auth.config.JwtTokenProvider
 import com.example.home_recipe.domain.auth.oauth2.OAuth2Constants
 import com.example.home_recipe.global.exception.BusinessException
@@ -9,6 +8,7 @@ import com.example.home_recipe.global.response.code.AuthCode
 import com.example.home_recipe.global.response.code.BaseCode
 import com.example.home_recipe.repository.UserRepository
 import com.fasterxml.jackson.databind.ObjectMapper
+import jakarta.servlet.http.Cookie
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
 import org.springframework.http.HttpStatus
@@ -17,6 +17,7 @@ import org.springframework.security.core.Authentication
 import org.springframework.security.oauth2.core.user.OAuth2User
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler
 import org.springframework.stereotype.Component
+import org.springframework.web.util.UriComponentsBuilder
 
 @Component
 class OAuth2AuthenticationSuccessHandler(
@@ -25,21 +26,31 @@ class OAuth2AuthenticationSuccessHandler(
     private val tokenService: TokenService,
     private val authorizationRequestRepository: HttpCookieOAuth2AuthorizationRequestRepository,
 ) : AuthenticationSuccessHandler {
-    private val objectMapper =
-        ObjectMapper()
+    private val objectMapper = ObjectMapper()
+
+    companion object {
+        private const val ACCESS_TOKEN = "accessToken"
+        private const val REFRESH_TOKEN = "refreshToken"
+        private const val REDIRECT_URL = "https://recook.kr/login-callback"
+        private const val MAX_AGE = 604800
+    }
 
     override fun onAuthenticationSuccess(
-        request: HttpServletRequest,
-        response: HttpServletResponse,
-        authentication: Authentication
+        request: HttpServletRequest, response: HttpServletResponse, authentication: Authentication
     ) {
         try {
             val principal: OAuth2User = authentication.principal as OAuth2User
-            val email: String = principal.getAttribute(OAuth2Constants.EMAIL)
-                ?: throw BusinessException(baseCode = AuthCode.AUTH_OAUTH2_INVALID_USER_INFO, status = HttpStatus.UNAUTHORIZED)
+            val email: String = principal.getAttribute(OAuth2Constants.EMAIL) ?: throw BusinessException(
+                baseCode = AuthCode.AUTH_OAUTH2_INVALID_USER_INFO,
+                status = HttpStatus.UNAUTHORIZED
+            )
 
-            val user = userRepository.findByEmail(email)
-                    .orElseThrow { BusinessException(baseCode = AuthCode.AUTH_OAUTH2_INVALID_USER_INFO, status = HttpStatus.UNAUTHORIZED) }
+            val user = userRepository.findByEmail(email).orElseThrow {
+                    BusinessException(
+                        baseCode = AuthCode.AUTH_OAUTH2_INVALID_USER_INFO,
+                        status = HttpStatus.UNAUTHORIZED
+                    )
+                }
 
             val accessToken: String = jwtTokenProvider.createAccessToken(user.email, user.role)
             val refreshToken: String = jwtTokenProvider.createRefreshToken(user.email, user.role)
@@ -47,39 +58,39 @@ class OAuth2AuthenticationSuccessHandler(
             tokenService.synchronizeRefreshToken(user, refreshToken)
             authorizationRequestRepository.removeAuthorizationRequestCookies(request, response)
 
-            response.status = HttpServletResponse.SC_OK
-            response.contentType = MediaType.APPLICATION_JSON_VALUE
-            response.characterEncoding = SecurityResponseConstants.CHARACTER_ENCODING_UTF_8
+            val targetUrl = UriComponentsBuilder.fromUriString(REDIRECT_URL)
+                .queryParam(ACCESS_TOKEN, accessToken)
+                .build().toUriString()
 
-            val body = ApiResponse.success(
-                    data = LoginResponse(accessToken, refreshToken, user.role),
-                    responseCode = AuthCode.AUTH_LOGIN_SUCCESS,
-                    status = HttpStatus.OK).body
-
-            response.writer.write(objectMapper.writeValueAsString(body))
-            response.writer.flush()
-        } catch (ex: BusinessException) { writeError(
-                response = response,
-                status = ex.status,
-                code = ex.baseCode
+            val refreshTokenCookie = Cookie(REFRESH_TOKEN, refreshToken).apply {
+                isHttpOnly = true
+                secure = true
+                path = "/"
+                maxAge = MAX_AGE
+            }
+            response.addCookie(refreshTokenCookie)
+            response.sendRedirect(targetUrl)
+        } catch (ex: BusinessException) {
+            writeError(
+                response = response, status = ex.status, code = ex.baseCode
             )
         }
     }
 
     private fun writeError(
-        response: HttpServletResponse,
-        status: HttpStatus,
-        code: BaseCode
+        response: HttpServletResponse, status: HttpStatus, code: BaseCode
     ) {
         val entity = ApiResponse.error<Unit>(
-            responseCode = code,
-            status = status
+            responseCode = code, status = status
         )
 
         response.status = entity.statusCode.value()
         response.contentType = MediaType.APPLICATION_JSON_VALUE
         response.characterEncoding = SecurityResponseConstants.CHARACTER_ENCODING_UTF_8
-        response.setHeader(SecurityResponseConstants.HEADER_CACHE_CONTROL, SecurityResponseConstants.HEADER_VALUE_NO_STORE)
+        response.setHeader(
+            SecurityResponseConstants.HEADER_CACHE_CONTROL,
+            SecurityResponseConstants.HEADER_VALUE_NO_STORE
+        )
         response.writer.write(objectMapper.writeValueAsString(entity.body))
         response.writer.flush()
     }
