@@ -68,6 +68,10 @@ class OAuth2AuthenticationSuccessHandler(
                 path = "/"
                 maxAge = MAX_AGE
             }
+            response.addHeader(
+                "Set-Cookie",
+                "refreshToken=$refreshToken; Path=/; Max-Age=$MAX_AGE; HttpOnly; Secure; SameSite=None"
+            )
             response.addCookie(refreshTokenCookie)
             response.sendRedirect(targetUrl)
         } catch (ex: BusinessException) {
