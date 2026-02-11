@@ -108,6 +108,7 @@ class AuthServiceTest {
             .hasMessage("존재하지 않는 이메일")
     }
 
+
     @Test
     @DisplayName("비밀번호가 불일치한 상태로 로그인 시도할 시 예외가 반환된다.")
     fun 비밀번호가_불일치한_상태로_로그인_시도할_시_예외가_반환된다() {
