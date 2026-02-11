@@ -23,7 +23,7 @@ data class BasicIngredients(
         )
 
         val COOKING_OIL = BasicIngredients(
-            category = IngredientCategory.ETC,
+            category = IngredientCategory.SPICE,
             name = "식용유"
         )
 

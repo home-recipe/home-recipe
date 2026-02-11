@@ -13,6 +13,7 @@ enum class AuthCode (
 
     AUTH_REFRESH_EXPIRED_TOKEN("AUTH_006", "Refresh Token이 만료되었습니다."),
     AUTH_REFRESH_INVALID_TOKEN("AUTH_007", "Refresh TOken이 유효하지 않습니다."),
+    NOT_EXIST_REFRESH_TOKEN("NOT_EXIST_REFRESH_TOKEN", "Refresh Token이 없습니다."),
 
     AUTH_OAUTH2_LOGIN_FAILED("AUTH_008", "OAuth2 로그인에 실패했습니다."),
     AUTH_OAUTH2_INVALID_USER_INFO("AUTH_009", "OAuth2 사용자 정보를 가져올 수 없습니다."),
