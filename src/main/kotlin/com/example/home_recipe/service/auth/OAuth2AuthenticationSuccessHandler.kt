@@ -8,7 +8,6 @@ import com.example.home_recipe.global.response.code.AuthCode
 import com.example.home_recipe.global.response.code.BaseCode
 import com.example.home_recipe.repository.UserRepository
 import com.fasterxml.jackson.databind.ObjectMapper
-import jakarta.servlet.http.Cookie
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
 import org.springframework.http.HttpStatus
@@ -24,8 +23,8 @@ class OAuth2AuthenticationSuccessHandler(
     private val userRepository: UserRepository,
     private val jwtTokenProvider: JwtTokenProvider,
     private val tokenService: TokenService,
-    private val authorizationRequestRepository: HttpCookieOAuth2AuthorizationRequestRepository,
 ) : AuthenticationSuccessHandler {
+
     private val objectMapper = ObjectMapper()
 
     companion object {
@@ -36,57 +35,53 @@ class OAuth2AuthenticationSuccessHandler(
     }
 
     override fun onAuthenticationSuccess(
-        request: HttpServletRequest, response: HttpServletResponse, authentication: Authentication
+        request: HttpServletRequest,
+        response: HttpServletResponse,
+        authentication: Authentication
     ) {
         try {
-            val principal: OAuth2User = authentication.principal as OAuth2User
-            val email: String = principal.getAttribute(OAuth2Constants.EMAIL) ?: throw BusinessException(
-                baseCode = AuthCode.AUTH_OAUTH2_INVALID_USER_INFO,
-                status = HttpStatus.UNAUTHORIZED
-            )
+            val principal = authentication.principal as OAuth2User
+            val email: String = principal.getAttribute(OAuth2Constants.EMAIL)
+                ?: throw BusinessException(
+                    baseCode = AuthCode.AUTH_OAUTH2_INVALID_USER_INFO,
+                    status = HttpStatus.UNAUTHORIZED
+                )
 
             val user = userRepository.findByEmail(email).orElseThrow {
-                    BusinessException(
-                        baseCode = AuthCode.AUTH_OAUTH2_INVALID_USER_INFO,
-                        status = HttpStatus.UNAUTHORIZED
-                    )
-                }
+                BusinessException(
+                    baseCode = AuthCode.AUTH_OAUTH2_INVALID_USER_INFO,
+                    status = HttpStatus.UNAUTHORIZED
+                )
+            }
 
             val accessToken: String = jwtTokenProvider.createAccessToken(user.email, user.role)
             val refreshToken: String = jwtTokenProvider.createRefreshToken(user.email, user.role)
 
             tokenService.synchronizeRefreshToken(user, refreshToken)
-            authorizationRequestRepository.removeAuthorizationRequestCookies(request, response)
+
+            // ✅ refreshToken 쿠키: SameSite=None 확실히 적용 (중복 Set-Cookie 제거)
+            response.addHeader(
+                "Set-Cookie",
+                "$REFRESH_TOKEN=$refreshToken; Path=/; Max-Age=$MAX_AGE; HttpOnly; Secure; SameSite=None"
+            )
 
             val targetUrl = UriComponentsBuilder.fromUriString(REDIRECT_URL)
                 .queryParam(ACCESS_TOKEN, accessToken)
-                .build().toUriString()
+                .build()
+                .toUriString()
 
-            val refreshTokenCookie = Cookie(REFRESH_TOKEN, refreshToken).apply {
-                isHttpOnly = true
-                secure = true
-                path = "/"
-                maxAge = MAX_AGE
-            }
-            response.addHeader(
-                "Set-Cookie",
-                "refreshToken=$refreshToken; Path=/; Max-Age=$MAX_AGE; HttpOnly; Secure; SameSite=None"
-            )
-            response.addCookie(refreshTokenCookie)
             response.sendRedirect(targetUrl)
         } catch (ex: BusinessException) {
-            writeError(
-                response = response, status = ex.status, code = ex.baseCode
-            )
+            writeError(response, ex.status, ex.baseCode)
         }
     }
 
     private fun writeError(
-        response: HttpServletResponse, status: HttpStatus, code: BaseCode
+        response: HttpServletResponse,
+        status: HttpStatus,
+        code: BaseCode
     ) {
-        val entity = ApiResponse.error<Unit>(
-            responseCode = code, status = status
-        )
+        val entity = ApiResponse.error<Unit>(responseCode = code, status = status)
 
         response.status = entity.statusCode.value()
         response.contentType = MediaType.APPLICATION_JSON_VALUE
