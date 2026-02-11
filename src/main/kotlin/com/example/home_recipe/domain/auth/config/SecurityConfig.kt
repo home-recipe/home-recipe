@@ -69,7 +69,7 @@ class SecurityConfig(
             .httpBasic { it.disable() }
             .logout { it.disable() }
             .sessionManagement {
-                it.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                it.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED)
             }
             .authorizeHttpRequests {
                 it.anyRequest().permitAll()
