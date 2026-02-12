@@ -8,7 +8,6 @@ import com.example.home_recipe.global.response.code.AuthCode
 import com.example.home_recipe.global.response.code.BaseCode
 import com.example.home_recipe.repository.UserRepository
 import com.fasterxml.jackson.databind.ObjectMapper
-import jakarta.servlet.http.Cookie
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
 import org.springframework.http.HttpStatus
@@ -17,23 +16,17 @@ import org.springframework.security.core.Authentication
 import org.springframework.security.oauth2.core.user.OAuth2User
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler
 import org.springframework.stereotype.Component
-import org.springframework.web.util.UriComponentsBuilder
 
 @Component
 class OAuth2AuthenticationSuccessHandler(
     private val userRepository: UserRepository,
     private val jwtTokenProvider: JwtTokenProvider,
     private val tokenService: TokenService,
+    private val authHelper: AuthHelper,
     private val authorizationRequestRepository: HttpCookieOAuth2AuthorizationRequestRepository,
 ) : AuthenticationSuccessHandler {
     private val objectMapper = ObjectMapper()
 
-    companion object {
-        private const val ACCESS_TOKEN = "accessToken"
-        private const val REFRESH_TOKEN = "refreshToken"
-        private const val REDIRECT_URL = "https://recook.kr/login-callback"
-        private const val MAX_AGE = 604800
-    }
 
     override fun onAuthenticationSuccess(
         request: HttpServletRequest, response: HttpServletResponse, authentication: Authentication
@@ -58,18 +51,7 @@ class OAuth2AuthenticationSuccessHandler(
             tokenService.synchronizeRefreshToken(user, refreshToken)
             authorizationRequestRepository.removeAuthorizationRequestCookies(request, response)
 
-            val targetUrl = UriComponentsBuilder.fromUriString(REDIRECT_URL)
-                .queryParam(ACCESS_TOKEN, accessToken)
-                .build().toUriString()
-
-            val refreshTokenCookie = Cookie(REFRESH_TOKEN, refreshToken).apply {
-                isHttpOnly = true
-                secure = true
-                path = "/"
-                maxAge = MAX_AGE
-            }
-            response.addCookie(refreshTokenCookie)
-            response.sendRedirect(targetUrl)
+            authHelper.buildResponse(accessToken, refreshToken, request, response)
         } catch (ex: BusinessException) {
             writeError(
                 response = response, status = ex.status, code = ex.baseCode
