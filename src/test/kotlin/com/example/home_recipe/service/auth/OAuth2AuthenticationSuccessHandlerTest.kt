@@ -10,11 +10,9 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import jakarta.servlet.http.HttpServletRequest
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
-import org.mockito.kotlin.any
-import org.mockito.kotlin.doNothing
-import org.mockito.kotlin.mock
-import org.mockito.kotlin.whenever
+import org.mockito.kotlin.*
 import org.springframework.mock.web.MockHttpServletResponse
 import org.springframework.security.core.Authentication
 import org.springframework.security.oauth2.core.user.OAuth2User
@@ -24,11 +22,13 @@ class OAuth2AuthenticationSuccessHandlerTest {
     private val userRepository: UserRepository = mock()
     private val jwtTokenProvider: JwtTokenProvider = mock()
     private val tokenService: TokenService = mock()
+    private val authHelper: AuthHelper = mock()
     private val authorizationRequestRepository: HttpCookieOAuth2AuthorizationRequestRepository = mock()
     private val handler = OAuth2AuthenticationSuccessHandler(
             userRepository = userRepository,
             jwtTokenProvider = jwtTokenProvider,
             tokenService = tokenService,
+            authHelper = authHelper,
             authorizationRequestRepository = authorizationRequestRepository)
 
     private val om = ObjectMapper()
@@ -85,58 +85,40 @@ class OAuth2AuthenticationSuccessHandlerTest {
     }
 
     @Test
-    fun `정상_로그인_시_200과_토큰_정보를_포함한_응답을_반환한다`() {
+    @DisplayName("정상 로그인 시 토큰을 생성하고 authHelper를 통해 응답을 빌드한다")
+    fun `Success_Login_Calls_AuthHelper`() {
         // given
         val request: HttpServletRequest = mock()
         val response = MockHttpServletResponse()
         val principal: OAuth2User = mock()
         val email = "test@example.com"
-
-        whenever(principal.getAttribute<String>(OAuth2Constants.EMAIL)).thenReturn(email)
-
-        val authentication: Authentication = mock()
-        whenever(authentication.principal).thenReturn(principal)
-
-        val user = mock<User>()
-        whenever(user.email).thenReturn(email)
-
-        val role = mock<Role>()
+        val role = Role.USER
         val accessToken = "access-token"
         val refreshToken = "refresh-token"
 
-        whenever(role.name).thenReturn("USER")
+        val user = mock<User>()
+        whenever(user.email).thenReturn(email)
         whenever(user.role).thenReturn(role)
+
+        val authentication: Authentication = mock()
+        whenever(authentication.principal).thenReturn(principal)
+        whenever(principal.getAttribute<String>(OAuth2Constants.EMAIL)).thenReturn(email)
         whenever(userRepository.findByEmail(email)).thenReturn(Optional.of(user))
+
         whenever(jwtTokenProvider.createAccessToken(email, role)).thenReturn(accessToken)
         whenever(jwtTokenProvider.createRefreshToken(email, role)).thenReturn(refreshToken)
-        doNothing().whenever(tokenService).synchronizeRefreshToken(user, refreshToken)
-        doNothing().whenever(authorizationRequestRepository).removeAuthorizationRequestCookies(any(), any())
 
         // when
         handler.onAuthenticationSuccess(request, response, authentication)
 
         // then
-        assertEquals(200, response.status)
-        assertEquals("application/json;charset=UTF-8", response.contentType)
-        assertEquals(SecurityResponseConstants.CHARACTER_ENCODING_UTF_8, response.characterEncoding)
-
-        val actualBody = response.contentAsString
-        assertTrue(actualBody.isNotBlank()) { "응답 바디가 비어 있습니다." }
-
-        val actualCode = responseCode(actualBody)
-        assertEquals(AuthCode.AUTH_LOGIN_SUCCESS.code, actualCode)
-
-        val dataNode = om.readTree(actualBody)
-                .path("response")
-                .path("data")
-
-        assertEquals(accessToken, dataNode.path("accessToken").asText())
-        assertEquals(refreshToken, dataNode.path("refreshToken").asText())
-        assertEquals("USER", dataNode.path("role").asText())
+        verify(tokenService).synchronizeRefreshToken(user, refreshToken)
+        verify(authorizationRequestRepository).removeAuthorizationRequestCookies(request, response)
+        verify(authHelper).buildResponse(accessToken, refreshToken, request, response)
     }
 
     private fun responseCode(body: String): String = om.readTree(body)
-            .path("response")
-            .path("code")
-            .asText()
+        .path("response")
+        .path("code")
+        .asText()
 }

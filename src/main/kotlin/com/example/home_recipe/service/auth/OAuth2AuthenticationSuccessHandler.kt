@@ -16,72 +16,55 @@ import org.springframework.security.core.Authentication
 import org.springframework.security.oauth2.core.user.OAuth2User
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler
 import org.springframework.stereotype.Component
-import org.springframework.web.util.UriComponentsBuilder
 
 @Component
 class OAuth2AuthenticationSuccessHandler(
     private val userRepository: UserRepository,
     private val jwtTokenProvider: JwtTokenProvider,
     private val tokenService: TokenService,
+    private val authHelper: AuthHelper,
+    private val authorizationRequestRepository: HttpCookieOAuth2AuthorizationRequestRepository,
 ) : AuthenticationSuccessHandler {
-
     private val objectMapper = ObjectMapper()
 
-    companion object {
-        private const val ACCESS_TOKEN = "accessToken"
-        private const val REFRESH_TOKEN = "refreshToken"
-        private const val REDIRECT_URL = "https://recook.kr/login-callback"
-        private const val MAX_AGE = 604800
-    }
 
     override fun onAuthenticationSuccess(
-        request: HttpServletRequest,
-        response: HttpServletResponse,
-        authentication: Authentication
+        request: HttpServletRequest, response: HttpServletResponse, authentication: Authentication
     ) {
         try {
-            val principal = authentication.principal as OAuth2User
-            val email: String = principal.getAttribute(OAuth2Constants.EMAIL)
-                ?: throw BusinessException(
-                    baseCode = AuthCode.AUTH_OAUTH2_INVALID_USER_INFO,
-                    status = HttpStatus.UNAUTHORIZED
-                )
+            val principal: OAuth2User = authentication.principal as OAuth2User
+            val email: String = principal.getAttribute(OAuth2Constants.EMAIL) ?: throw BusinessException(
+                baseCode = AuthCode.AUTH_OAUTH2_INVALID_USER_INFO,
+                status = HttpStatus.UNAUTHORIZED
+            )
 
             val user = userRepository.findByEmail(email).orElseThrow {
-                BusinessException(
-                    baseCode = AuthCode.AUTH_OAUTH2_INVALID_USER_INFO,
-                    status = HttpStatus.UNAUTHORIZED
-                )
-            }
+                    BusinessException(
+                        baseCode = AuthCode.AUTH_OAUTH2_INVALID_USER_INFO,
+                        status = HttpStatus.UNAUTHORIZED
+                    )
+                }
 
             val accessToken: String = jwtTokenProvider.createAccessToken(user.email, user.role)
             val refreshToken: String = jwtTokenProvider.createRefreshToken(user.email, user.role)
 
             tokenService.synchronizeRefreshToken(user, refreshToken)
+            authorizationRequestRepository.removeAuthorizationRequestCookies(request, response)
 
-            // ✅ refreshToken 쿠키: SameSite=None 확실히 적용 (중복 Set-Cookie 제거)
-            response.addHeader(
-                "Set-Cookie",
-                "$REFRESH_TOKEN=$refreshToken; Path=/; Max-Age=$MAX_AGE; HttpOnly; Secure; SameSite=None"
-            )
-
-            val targetUrl = UriComponentsBuilder.fromUriString(REDIRECT_URL)
-                .queryParam(ACCESS_TOKEN, accessToken)
-                .build()
-                .toUriString()
-
-            response.sendRedirect(targetUrl)
+            authHelper.buildResponse(accessToken, refreshToken, request, response)
         } catch (ex: BusinessException) {
-            writeError(response, ex.status, ex.baseCode)
+            writeError(
+                response = response, status = ex.status, code = ex.baseCode
+            )
         }
     }
 
     private fun writeError(
-        response: HttpServletResponse,
-        status: HttpStatus,
-        code: BaseCode
+        response: HttpServletResponse, status: HttpStatus, code: BaseCode
     ) {
-        val entity = ApiResponse.error<Unit>(responseCode = code, status = status)
+        val entity = ApiResponse.error<Unit>(
+            responseCode = code, status = status
+        )
 
         response.status = entity.statusCode.value()
         response.contentType = MediaType.APPLICATION_JSON_VALUE

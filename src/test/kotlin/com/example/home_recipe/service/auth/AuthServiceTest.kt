@@ -3,6 +3,9 @@ package com.example.home_recipe.service.auth
 import com.example.home_recipe.controller.user.dto.request.JoinRequest
 import com.example.home_recipe.controller.auth.dto.request.LoginRequest
 import com.example.home_recipe.controller.user.dto.response.JoinResponse
+import com.example.home_recipe.domain.auth.config.JwtTokenProvider
+import com.example.home_recipe.domain.user.Role
+import com.example.home_recipe.domain.user.User
 import com.example.home_recipe.global.exception.BusinessException
 import com.example.home_recipe.repository.RefreshTokenRepository
 import com.example.home_recipe.service.user.UserService
@@ -27,6 +30,10 @@ class AuthServiceTest {
     private lateinit var authService: AuthService
     @Autowired
     private lateinit var tokenRepository: RefreshTokenRepository
+    @Autowired
+    private lateinit var jwtTokenProvider: JwtTokenProvider
+    @Autowired
+    private lateinit var tokenService: TokenService
     @Autowired
     private lateinit var em : EntityManager
 
@@ -87,12 +94,16 @@ class AuthServiceTest {
     @DisplayName("Access Token을 재발급한다.")
     fun Access_Token을_재발급한다() {
         //given
-        createUser()
-        val loginRequest = LoginRequest(EMAIL, PASSWORD)
+        val user = createUser()
+        val refreshToken = jwtTokenProvider.createRefreshToken(EMAIL, user.role)
+        tokenService.synchronizeRefreshToken(user, refreshToken)
+        em.flush()
+        em.clear()
         //when
-        val after = authService.reissueAccessToken(EMAIL).accessToken
+        val response = authService.reissueAccessToken(EMAIL, refreshToken)
         //then
-        assertThat(after).isNotNull()
+        assertThat(response.accessToken).isNotNull()
+        assertThat(jwtTokenProvider.getEmail(response.accessToken)).isEqualTo(user.email)
     }
 
     ////// 예외 테스트
@@ -108,6 +119,7 @@ class AuthServiceTest {
             .hasMessage("존재하지 않는 이메일")
     }
 
+
     @Test
     @DisplayName("비밀번호가 불일치한 상태로 로그인 시도할 시 예외가 반환된다.")
     fun 비밀번호가_불일치한_상태로_로그인_시도할_시_예외가_반환된다() {
@@ -120,8 +132,9 @@ class AuthServiceTest {
             .hasMessage("비밀번호 불일치")
     }
 
-    fun createUser(): JoinResponse {
+    fun createUser(): User {
         val joinRequest = JoinRequest(NAME, PASSWORD, EMAIL)
-        return userService.join(joinRequest)
+        userService.join(joinRequest)
+        return userService.getUser(EMAIL)
     }
 }
