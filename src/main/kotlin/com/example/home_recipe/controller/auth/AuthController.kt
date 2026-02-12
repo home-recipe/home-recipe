@@ -1,11 +1,11 @@
 package com.example.home_recipe.controller.auth
 
+import com.example.home_recipe.controller.auth.dto.request.LoginRequest
 import com.example.home_recipe.controller.auth.dto.response.AccessTokenResponse
 import com.example.home_recipe.controller.auth.dto.response.LoginResponse
-import com.example.home_recipe.controller.auth.dto.request.LoginRequest
-import com.example.home_recipe.domain.auth.config.JwtTokenProvider
 import com.example.home_recipe.global.response.ApiResponse
 import com.example.home_recipe.global.response.code.AuthCode
+import com.example.home_recipe.service.auth.AuthHelper
 import com.example.home_recipe.service.auth.AuthService
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
@@ -22,20 +22,21 @@ import org.springframework.web.bind.annotation.RestController
 @RequestMapping("/api/auth")
 class AuthController(
     private val authService: AuthService,
-    private val jwtTokenProvider: JwtTokenProvider
+    private val authHelper: AuthHelper
 ) {
-    companion object {
-        const val CLIENT_TYPE = "X-Client-Type"
-        const val WEB = "WEB"
-        const val MOBILE = "MOBILE"
-        const val AUTHORIZATION = "Authorization"
-        const val BEARER = "Bearer "
-        const val REFRESH_TOKEN = "refreshToken"
-    }
 
     @PostMapping("/login")
-    fun login(@Valid @RequestBody request: LoginRequest): ResponseEntity<ApiResponse<LoginResponse>> {
-        return ApiResponse.success(authService.login(request), AuthCode.AUTH_LOGIN_SUCCESS, HttpStatus.OK)
+    fun login(
+        @Valid @RequestBody request: LoginRequest,
+        servletRequest: HttpServletRequest,
+        servletResponse: HttpServletResponse
+    ): ResponseEntity<ApiResponse<LoginResponse>> {
+        val loginResponse = authService.login(request)
+        val clientType = servletRequest.getHeader(AuthHelper.CLIENT_TYPE_HEADER)
+        if (clientType.uppercase() == AuthHelper.WEB) {
+            authHelper.setRefreshTokenCookie(servletResponse, loginResponse.refreshToken)
+        }
+        return ApiResponse.success(loginResponse, AuthCode.AUTH_LOGIN_SUCCESS, HttpStatus.OK)
     }
 
     @PostMapping("/logout")
@@ -47,28 +48,15 @@ class AuthController(
     fun reissueAccessToken(
         authentication: Authentication,
         request: HttpServletRequest,
-        response: HttpServletResponse
     ): ResponseEntity<ApiResponse<AccessTokenResponse>> {
+        val refreshToken = authHelper.extractRefreshToken(request)
 
-        val clientType = request.getHeader(CLIENT_TYPE)?: WEB
-
-        val refreshToken = when(clientType.uppercase()) {
-            MOBILE -> {
-                request.getHeader(AUTHORIZATION)
-                    ?.removePrefix(BEARER)
-                    ?.trim()
-            }
-            else -> {
-                request.cookies
-                    ?.find {it.name == REFRESH_TOKEN}
-                    ?.value
-            }
-        }
-        if(refreshToken.isNullOrBlank()) {
+        if (refreshToken.isNullOrBlank()) {
             return ApiResponse.success(null, AuthCode.NOT_EXIST_REFRESH_TOKEN, HttpStatus.UNAUTHORIZED)
         }
+
         return ApiResponse.success(
-            authService.reissueAccessToken(authentication.name),
+            authService.reissueAccessToken(authentication.name, refreshToken),
             AuthCode.AUTH_REISSUE_SUCCESS,
             HttpStatus.OK
         )

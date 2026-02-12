@@ -1,12 +1,11 @@
 package com.example.home_recipe.service.auth
 
-import com.example.home_recipe.controller.auth.dto.response.LoginResponse
-import com.example.home_recipe.controller.auth.dto.response.AccessTokenResponse
 import com.example.home_recipe.controller.auth.dto.request.LoginRequest
+import com.example.home_recipe.controller.auth.dto.response.AccessTokenResponse
+import com.example.home_recipe.controller.auth.dto.response.LoginResponse
 import com.example.home_recipe.domain.auth.config.JwtTokenProvider
 import com.example.home_recipe.global.exception.BusinessException
 import com.example.home_recipe.global.response.code.AuthCode
-import com.example.home_recipe.global.response.code.IngredientCode
 import com.example.home_recipe.global.response.code.UserCode
 import com.example.home_recipe.service.user.UserService
 import jakarta.transaction.Transactional
@@ -39,8 +38,14 @@ class AuthService(
     }
 
     @Transactional
-    fun reissueAccessToken(email: String): AccessTokenResponse {
+    fun reissueAccessToken(email: String, providedRefreshToken: String): AccessTokenResponse {
         val user = userService.getUser(email)
+        jwtTokenProvider.validateToken(providedRefreshToken)
+        val savedRefreshToken = tokenService.getRefreshTokenByUser(user)
+
+        if (providedRefreshToken != savedRefreshToken.refreshToken) {
+            throw BusinessException(AuthCode.AUTH_INVALID_TOKEN, HttpStatus.UNAUTHORIZED)
+        }
         val accessToken = jwtTokenProvider.createAccessToken(email, user.role)
         return AccessTokenResponse(accessToken)
     }
