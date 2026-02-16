@@ -40,16 +40,19 @@ class AuthHelper {
         accessToken: String,
         refreshToken: String,
         request: HttpServletRequest,
-        response: HttpServletResponse
+        response: HttpServletResponse,
+        clientTypeFromCookie: String? = null
     ) {
         val clientType = request.getHeader("X-Client-Type")
-            ?: request.getParameter("state")
+            ?: clientTypeFromCookie
             ?: WEB
 
         val baseUrl = if(clientType.uppercase() == MOBILE) MOBILE_REDIRECT_URL else WEB_REDIRECT_URL
+        println(">>>>>>>>AuthHelper : " + baseUrl)
 
         val uriBuilder = UriComponentsBuilder.fromUriString(baseUrl)
             .queryParam(ACCESS_TOKEN, accessToken)
+        println(">>>>>>>>AuthHelper uriBuilder result : " + uriBuilder)
 
         if (clientType.uppercase() == MOBILE) {
             val targetUrl = uriBuilder

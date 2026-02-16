@@ -2,6 +2,7 @@ package com.example.home_recipe.domain.auth.config
 
 import com.example.home_recipe.domain.user.Role
 import com.example.home_recipe.service.auth.CustomOAuth2UserService
+import com.example.home_recipe.service.auth.HttpCookieOAuth2AuthorizationRequestRepository
 import com.example.home_recipe.service.auth.OAuth2AuthenticationFailureHandler
 import com.example.home_recipe.service.auth.OAuth2AuthenticationSuccessHandler
 import org.springframework.beans.factory.annotation.Value
@@ -31,6 +32,7 @@ class SecurityConfig(
     private val oAuth2UserService: CustomOAuth2UserService,
     private val oAuth2SuccessHandler: OAuth2AuthenticationSuccessHandler,
     private val oAuth2FailureHandler: OAuth2AuthenticationFailureHandler,
+    private val authorizationRequestRepository: HttpCookieOAuth2AuthorizationRequestRepository,
 ) {
 
     companion object {
@@ -74,6 +76,9 @@ class SecurityConfig(
             }
             .oauth2Login { oauth2 ->
                 oauth2
+                    .authorizationEndpoint { authorization ->
+                        authorization.authorizationRequestRepository(authorizationRequestRepository)
+                    }
                     .userInfoEndpoint { userInfo ->
                         userInfo.userService(oAuth2UserService)
                     }
