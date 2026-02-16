@@ -13,7 +13,8 @@ class AuthHelper {
     companion object {
         const val ACCESS_TOKEN = "accessToken"
         const val REFRESH_TOKEN = "refreshToken"
-        const val REDIRECT_URL = "https://recook.kr/login-callback"
+        const val WEB_REDIRECT_URL = "https://recook.kr/login-callback"
+        const val MOBILE_REDIRECT_URL = "recook://login-callback"
         const val CLIENT_TYPE_HEADER = "X-Client-Type"
         const val REFRESH_TOKEN_HEADER = "X-Refresh-Token"
         const val MAX_AGE = 604800
@@ -45,7 +46,9 @@ class AuthHelper {
             ?: request.getParameter("state")
             ?: WEB
 
-        val uriBuilder = UriComponentsBuilder.fromUriString(REDIRECT_URL)
+        val baseUrl = if(clientType.uppercase() == MOBILE) MOBILE_REDIRECT_URL else WEB_REDIRECT_URL
+
+        val uriBuilder = UriComponentsBuilder.fromUriString(baseUrl)
             .queryParam(ACCESS_TOKEN, accessToken)
 
         if (clientType.uppercase() == MOBILE) {
