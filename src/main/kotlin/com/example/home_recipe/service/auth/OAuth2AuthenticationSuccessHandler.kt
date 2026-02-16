@@ -49,9 +49,8 @@ class OAuth2AuthenticationSuccessHandler(
             val refreshToken: String = jwtTokenProvider.createRefreshToken(user.email, user.role)
 
             tokenService.synchronizeRefreshToken(user, refreshToken)
-            authorizationRequestRepository.removeAuthorizationRequestCookies(request, response)
-
             authHelper.buildResponse(accessToken, refreshToken, request, response)
+            authorizationRequestRepository.removeAuthorizationRequestCookies(request, response)
         } catch (ex: BusinessException) {
             writeError(
                 response = response, status = ex.status, code = ex.baseCode
