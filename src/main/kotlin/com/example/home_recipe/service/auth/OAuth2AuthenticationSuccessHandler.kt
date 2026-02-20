@@ -31,7 +31,6 @@ class OAuth2AuthenticationSuccessHandler(
     override fun onAuthenticationSuccess(
         request: HttpServletRequest, response: HttpServletResponse, authentication: Authentication
     ) {
-        println(">>>>>>>>>디버깅 - 성공 핸들러 진입 완료")
         try {
             val principal: OAuth2User = authentication.principal as OAuth2User
             val email: String = principal.getAttribute(OAuth2Constants.EMAIL) ?: throw BusinessException(
@@ -52,7 +51,6 @@ class OAuth2AuthenticationSuccessHandler(
             tokenService.synchronizeRefreshToken(user, refreshToken)
 
             val clientType = authorizationRequestRepository.getClientType(request)
-            println(">>>>>>>>>디버깅 - clientType from cookie: $clientType")
             authHelper.buildResponse(accessToken, refreshToken, request, response, clientType)
             authorizationRequestRepository.removeAuthorizationRequestCookies(request, response)
         } catch (ex: BusinessException) {
