@@ -1,8 +1,10 @@
 package com.example.home_recipe.controller.auth
 
 import com.example.home_recipe.controller.auth.dto.request.LoginRequest
+import com.example.home_recipe.controller.auth.dto.request.TokenRequest
 import com.example.home_recipe.controller.auth.dto.response.AccessTokenResponse
 import com.example.home_recipe.controller.auth.dto.response.LoginResponse
+import com.example.home_recipe.controller.auth.dto.response.TokenResponse
 import com.example.home_recipe.global.response.ApiResponse
 import com.example.home_recipe.global.response.code.AuthCode
 import com.example.home_recipe.service.auth.AuthHelper
@@ -42,6 +44,14 @@ class AuthController(
     @PostMapping("/logout")
     fun logout(authentication: Authentication): ResponseEntity<ApiResponse<Unit>> {
         return ApiResponse.success(authService.logout(authentication.name), AuthCode.AUTH_LOGOUT_SUCCESS, HttpStatus.OK)
+    }
+
+    @PostMapping("/token")
+    fun exchangeToken(
+        @Valid @RequestBody request: TokenRequest,
+    ): ResponseEntity<ApiResponse<TokenResponse>> {
+        val tokenResponse = authService.exchangeToken(request.code, request.codeVerifier)
+        return ApiResponse.success(tokenResponse, AuthCode.AUTH_TOKEN_ISSUED, HttpStatus.OK)
     }
 
     @PostMapping("/reissue")
