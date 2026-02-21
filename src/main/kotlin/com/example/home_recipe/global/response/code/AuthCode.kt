@@ -18,6 +18,9 @@ enum class AuthCode (
     AUTH_OAUTH2_LOGIN_FAILED("AUTH_008", "OAuth2 로그인에 실패했습니다."),
     AUTH_OAUTH2_INVALID_USER_INFO("AUTH_009", "OAuth2 사용자 정보를 가져올 수 없습니다."),
     AUTH_PKCE_CHALLENGE_MISSING("AUTH_010", "PKCE challenge 값이 누락되었습니다."),
+    AUTH_INVALID_AUTH_CODE("AUTH_011", "유효하지 않거나 만료된 인가 코드입니다."),
+    AUTH_PKCE_VERIFICATION_FAILED("AUTH_012", "PKCE 검증에 실패했습니다."),
+    AUTH_TOKEN_ISSUED("AUTH_013", "토큰 발급 성공"),
 
     AUTH_LOGIN_SUCCESS("AUTH_LOGIN_SUCCESS", "로그인 성공"),
     AUTH_LOGOUT_SUCCESS("AUTH_LOGOUT_SUCCESS", "로그아웃 성공"),
