@@ -2,8 +2,9 @@ package com.example.home_recipe.service.auth
 
 import com.example.home_recipe.controller.auth.dto.request.LoginRequest
 import com.example.home_recipe.controller.auth.dto.response.AccessTokenResponse
-import com.example.home_recipe.controller.auth.dto.response.LoginResponse
+import com.example.home_recipe.controller.auth.dto.response.LoginCodeResponse
 import com.example.home_recipe.controller.auth.dto.response.TokenResponse
+import com.example.home_recipe.domain.auth.oauth2.AuthCodeEntry
 import com.example.home_recipe.domain.auth.config.JwtTokenProvider
 import com.example.home_recipe.global.exception.BusinessException
 import com.example.home_recipe.global.response.code.AuthCode
@@ -16,6 +17,7 @@ import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.stereotype.Service
 import java.security.MessageDigest
 import java.util.Base64
+import java.util.UUID
 
 @Service
 class AuthService(
@@ -28,14 +30,15 @@ class AuthService(
 
     private val log = LoggerFactory.getLogger(javaClass)
     @Transactional
-    fun login(request: LoginRequest): LoginResponse {
+    fun login(request: LoginRequest): LoginCodeResponse {
         val user = userService.getUser(request.email)
         checkPassword(request.password, user.password)
 
-        val accessToken = jwtTokenProvider.createAccessToken(user.email, user.role)
-        val refreshToken = jwtTokenProvider.createRefreshToken(user.email, user.role)
-        tokenService.synchronizeRefreshToken(user, refreshToken)
-        return LoginResponse(accessToken, refreshToken, user.role)
+        val authorizationCode = UUID.randomUUID().toString()
+        authCodeCacheService.store(authorizationCode, AuthCodeEntry(challenge = request.challenge, email = user.email))
+        log.info("로그인 인가 코드 발급 완료: {}", authorizationCode)
+
+        return LoginCodeResponse(code = authorizationCode)
     }
 
     private fun checkPassword(rawPassword: String, encryptedPassword: String) {
