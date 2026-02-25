@@ -48,11 +48,9 @@ class AuthHelper {
             ?: WEB
 
         val baseUrl = if(clientType.uppercase() == MOBILE) MOBILE_REDIRECT_URL else WEB_REDIRECT_URL
-        println(">>>>>>>>AuthHelper : " + baseUrl)
 
         val uriBuilder = UriComponentsBuilder.fromUriString(baseUrl)
             .queryParam(ACCESS_TOKEN, accessToken)
-        println(">>>>>>>>AuthHelper uriBuilder result : " + uriBuilder)
 
         if (clientType.uppercase() == MOBILE) {
             val targetUrl = uriBuilder
