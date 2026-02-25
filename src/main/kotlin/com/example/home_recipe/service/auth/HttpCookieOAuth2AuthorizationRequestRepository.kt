@@ -16,6 +16,7 @@ class HttpCookieOAuth2AuthorizationRequestRepository :
     companion object {
         private const val COOKIE_NAME = "OAUTH2_AUTH_REQUEST"
         const val CLIENT_TYPE_COOKIE = "OAUTH2_CLIENT_TYPE"
+        const val PKCE_CHALLENGE_PARAM = "challenge"
         private const val COOKIE_EXPIRE_SECONDS = 180
         private const val COOKIE_PATH = "/"
         private const val EMPTY_VALUE = ""
@@ -37,10 +38,20 @@ class HttpCookieOAuth2AuthorizationRequestRepository :
             return
         }
 
-        val value: String = serialize(authorizationRequest)
+        val challenge = request.getParameter(PKCE_CHALLENGE_PARAM)
+        val requestToSave = if (challenge != null) {
+            val additionalParams = authorizationRequest.additionalParameters.toMutableMap()
+            additionalParams[PKCE_CHALLENGE_PARAM] = challenge
+            OAuth2AuthorizationRequest.from(authorizationRequest)
+                .additionalParameters(additionalParams)
+                .build()
+        } else {
+            authorizationRequest
+        }
+
+        val value: String = serialize(requestToSave)
         addCookie(response, value)
 
-        // state 파라미터에서 클라이언트 타입(MOBILE/WEB)을 쿠키에 저장
         val clientType = request.getParameter("state")
         if (clientType != null) {
             addClientTypeCookie(response, clientType)

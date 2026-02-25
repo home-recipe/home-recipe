@@ -1,8 +1,10 @@
 package com.example.home_recipe.controller.auth
 
 import com.example.home_recipe.controller.auth.dto.request.LoginRequest
+import com.example.home_recipe.controller.auth.dto.request.TokenRequest
 import com.example.home_recipe.controller.auth.dto.response.AccessTokenResponse
-import com.example.home_recipe.controller.auth.dto.response.LoginResponse
+import com.example.home_recipe.controller.auth.dto.response.LoginCodeResponse
+import com.example.home_recipe.controller.auth.dto.response.TokenResponse
 import com.example.home_recipe.global.response.ApiResponse
 import com.example.home_recipe.global.response.code.AuthCode
 import com.example.home_recipe.service.auth.AuthHelper
@@ -28,20 +30,22 @@ class AuthController(
     @PostMapping("/login")
     fun login(
         @Valid @RequestBody request: LoginRequest,
-        servletRequest: HttpServletRequest,
-        servletResponse: HttpServletResponse
-    ): ResponseEntity<ApiResponse<LoginResponse>> {
-        val loginResponse = authService.login(request)
-        val clientType = servletRequest.getHeader(AuthHelper.CLIENT_TYPE_HEADER)
-        if (clientType.uppercase() == AuthHelper.WEB) {
-            authHelper.setRefreshTokenCookie(servletResponse, loginResponse.refreshToken)
-        }
-        return ApiResponse.success(loginResponse, AuthCode.AUTH_LOGIN_SUCCESS, HttpStatus.OK)
+    ): ResponseEntity<ApiResponse<LoginCodeResponse>> {
+        val loginCodeResponse = authService.login(request)
+        return ApiResponse.success(loginCodeResponse, AuthCode.AUTH_LOGIN_SUCCESS, HttpStatus.OK)
     }
 
     @PostMapping("/logout")
     fun logout(authentication: Authentication): ResponseEntity<ApiResponse<Unit>> {
         return ApiResponse.success(authService.logout(authentication.name), AuthCode.AUTH_LOGOUT_SUCCESS, HttpStatus.OK)
+    }
+
+    @PostMapping("/token")
+    fun exchangeToken(
+        @Valid @RequestBody request: TokenRequest,
+    ): ResponseEntity<ApiResponse<TokenResponse>> {
+        val tokenResponse = authService.exchangeToken(request.code, request.codeVerifier)
+        return ApiResponse.success(tokenResponse, AuthCode.AUTH_TOKEN_ISSUED, HttpStatus.OK)
     }
 
     @PostMapping("/reissue")
