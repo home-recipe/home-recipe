@@ -1,11 +1,14 @@
 package com.example.home_recipe.service.recipe
 
 import com.example.home_recipe.controller.recipe.response.RecipesResponse
+import com.example.home_recipe.domain.recipe.RecipeCache
 import com.example.home_recipe.global.exception.BusinessException
 import com.example.home_recipe.global.response.code.RecipeCode
+import com.example.home_recipe.global.util.IngredientHashUtil
+import com.example.home_recipe.repository.RecipeCacheRepository
 import com.example.home_recipe.service.refrigerator.RefrigeratorService
+import com.fasterxml.jackson.databind.ObjectMapper
 import com.openai.client.OpenAIClientAsync
-import com.openai.client.okhttp.OpenAIOkHttpClientAsync
 import com.openai.models.ChatModel
 import com.openai.models.chat.completions.ChatCompletionCreateParams
 import org.springframework.http.HttpStatus
@@ -14,13 +17,35 @@ import org.springframework.stereotype.Service
 @Service
 class RecipeService(
     private val openAiClient: OpenAIClientAsync,
-    val refrigeratorService: RefrigeratorService
+    val refrigeratorService: RefrigeratorService,
+    private val recipeCacheRepository: RecipeCacheRepository,
+    private val objectMapper: ObjectMapper
 ) {
 
     fun chat(email: String): RecipesResponse {
+        val ingredients = refrigeratorService.getMyIngredientsOnlyName(email)
+        val cacheKey = IngredientHashUtil.generateCacheKey("recipe", ingredients)
+
+        val cached = recipeCacheRepository.findById(cacheKey)
+        if (cached.isPresent) {
+            return objectMapper.readValue(cached.get().recipeContent, RecipesResponse::class.java)
+        }
+
+        val result = callOpenAi(ingredients)
+
+        val cacheEntry = RecipeCache(
+            id = cacheKey,
+            recipeContent = objectMapper.writeValueAsString(result)
+        )
+        recipeCacheRepository.save(cacheEntry)
+
+        return result
+    }
+
+    private fun callOpenAi(ingredients: List<String>): RecipesResponse {
         val params = ChatCompletionCreateParams.builder()
             .addSystemMessage(RecipePrompt.SYSTEM_PROMPT)
-            .addUserMessage(RecipePrompt.userPrompt(refrigeratorService.getMyIngredientsOnlyName(email)))
+            .addUserMessage(RecipePrompt.userPrompt(ingredients))
             .model(ChatModel.GPT_5_MINI)
             .responseFormat(RecipesResponse::class.java)
             .build()
