@@ -63,6 +63,8 @@ dependencies {
 	implementation("com.fasterxml.jackson.core:jackson-databind")
 
 	implementation("org.springframework.boot:spring-boot-starter-aop")
+
+	implementation("org.springframework.boot:spring-boot-starter-data-elasticsearch")
 }
 
 kotlin {
