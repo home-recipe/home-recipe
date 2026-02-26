@@ -21,12 +21,29 @@ class OpenApiIngredientService(
     private val webClientBuilder: WebClient.Builder
 ) {
     companion object {
-        private val FOOD_SEARCH_LEVELS = listOf("foodNm", "foodLv4Nm", "foodLv5Nm", "foodLv6Nm")
+        private const val LEVEL_FOOD_NM = "foodNm"
+        private const val LEVEL_FOOD_LV4_NM = "foodLv4Nm"
+        private const val LEVEL_FOOD_LV5_NM = "foodLv5Nm"
+        private const val LEVEL_FOOD_LV6_NM = "foodLv6Nm"
+
+        private val FOOD_SEARCH_LEVELS = listOf(
+            LEVEL_FOOD_NM,
+            LEVEL_FOOD_LV4_NM,
+            LEVEL_FOOD_LV5_NM,
+            LEVEL_FOOD_LV6_NM
+        )
+
+        // Query parameter names
+        private const val QUERY_SERVICE_KEY = "serviceKey"
+        private const val QUERY_TYPE = "type"
+        private const val QUERY_PAGE_NO = "pageNo"
+        private const val QUERY_NUM_OF_ROWS = "numOfRows"
 
         private const val RESPONSE_TYPE = "json"
         private const val DEFAULT_PAGE_NO = 1
         private const val DEFAULT_NUM_OF_ROWS = 5
         private const val ENCODING_TYPE = "UTF-8"
+
         private const val HEADER_NAME = "Accept"
         private const val HEADER_VALUE = "application/json"
 
@@ -51,15 +68,19 @@ class OpenApiIngredientService(
         return emptyList()
     }
 
-    private suspend fun callApiWithParam(paramName: String, keyword: String, serviceKey: String, apiUrl: String)
-            : List<IngredientResponse> {
+    private suspend fun callApiWithParam(
+        paramName: String,
+        keyword: String,
+        serviceKey: String,
+        apiUrl: String
+    ): List<IngredientResponse> {
         val encodedKeyword = URLEncoder.encode(keyword, ENCODING_TYPE)
 
-        val finalUrl = "${apiUrl}?serviceKey=$serviceKey" +
-                "&type=$RESPONSE_TYPE" +
+        val finalUrl = "${apiUrl}?$QUERY_SERVICE_KEY=$serviceKey" +
+                "&$QUERY_TYPE=$RESPONSE_TYPE" +
                 "&$paramName=$encodedKeyword" +
-                "&pageNo=$DEFAULT_PAGE_NO" +
-                "&numOfRows=$DEFAULT_NUM_OF_ROWS"
+                "&$QUERY_PAGE_NO=$DEFAULT_PAGE_NO" +
+                "&$QUERY_NUM_OF_ROWS=$DEFAULT_NUM_OF_ROWS"
 
         return try {
             val response = webClientBuilder.build().get()
@@ -67,6 +88,7 @@ class OpenApiIngredientService(
                 .header(HEADER_NAME, HEADER_VALUE)
                 .retrieve()
                 .awaitBody<Map<String, Any>>()
+
             verifyFoodExistence(response, keyword)
         } catch (e: Exception) {
             throw BusinessException(IngredientCode.OPEN_API_INGREDIENT_ERROR_01, HttpStatus.INTERNAL_SERVER_ERROR)
