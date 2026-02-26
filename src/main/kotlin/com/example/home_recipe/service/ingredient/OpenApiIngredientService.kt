@@ -4,6 +4,7 @@ import com.example.home_recipe.controller.ingredient.dto.response.IngredientResp
 import com.example.home_recipe.controller.ingredient.dto.response.Source
 import com.example.home_recipe.global.exception.BusinessException
 import com.example.home_recipe.global.response.code.IngredientCode
+import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpStatus
@@ -24,6 +25,8 @@ class OpenApiIngredientService(
     webClientBuilder: WebClient.Builder
 ) {
     companion object {
+        private val log = LoggerFactory.getLogger(OpenApiIngredientService::class.java)
+
         private const val LEVEL_FOOD_NM = "foodNm"
         private const val LEVEL_FOOD_LV4_NM = "foodLv4Nm"
         private const val LEVEL_FOOD_LV5_NM = "foodLv5Nm"
@@ -97,6 +100,7 @@ class OpenApiIngredientService(
             verifyFoodExistence(response, keyword)
 
         } catch (e: Exception) {
+            log.error("OpenAPI 호출 실패 - keyword: {}", keyword, e)
             throw BusinessException(
                 IngredientCode.OPEN_API_INGREDIENT_ERROR_01,
                 HttpStatus.INTERNAL_SERVER_ERROR
@@ -111,17 +115,17 @@ class OpenApiIngredientService(
 
         val resultMsg = header?.get(KEY_RESULT_MSG) as? String
         if (resultMsg == API_NO_DATA_MSG) {
-            println("검색 결과 없음: $keyword")
+            log.debug("검색 결과 없음 - keyword: {}", keyword)
             return emptyList()
         }
 
         val items = body?.get(KEY_ITEMS) as? List<Any>
         if (items.isNullOrEmpty()) {
-            println("결과 아이템이 비어있음: $keyword")
+            log.debug("결과 아이템 비어있음 - keyword: {}", keyword)
             return emptyList()
         }
 
-        println("--- 검증 성공: '$keyword'를 리스트에 담습니다 ---")
+        log.info("OpenAPI 검색 성공 - keyword: {}", keyword)
         return listOf(IngredientResponse(null, null, name = keyword, Source.OPEN_API))
     }
 }
