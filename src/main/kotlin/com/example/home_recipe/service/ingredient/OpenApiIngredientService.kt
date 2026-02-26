@@ -7,10 +7,13 @@ import com.example.home_recipe.global.response.code.IngredientCode
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpStatus
+import org.springframework.http.MediaType
 import org.springframework.stereotype.Service
 import org.springframework.web.reactive.function.client.WebClient
 import org.springframework.web.reactive.function.client.awaitBody
+import org.springframework.web.util.UriComponentsBuilder
 import java.net.URLEncoder
+import java.nio.charset.StandardCharsets
 
 @Service
 class OpenApiIngredientService(
@@ -18,7 +21,7 @@ class OpenApiIngredientService(
     @Value("\${external-api.process-food.service-key}") private val processFoodKey: String,
     @Value("\${external-api.raw-food.url}") private val rawFoodUrl: String,
     @Value("\${external-api.process-food.url}") private val processFoodUrl: String,
-    private val webClientBuilder: WebClient.Builder
+    webClientBuilder: WebClient.Builder
 ) {
     companion object {
         private const val LEVEL_FOOD_NM = "foodNm"
@@ -33,7 +36,6 @@ class OpenApiIngredientService(
             LEVEL_FOOD_LV6_NM
         )
 
-        // Query parameter names
         private const val QUERY_SERVICE_KEY = "serviceKey"
         private const val QUERY_TYPE = "type"
         private const val QUERY_PAGE_NO = "pageNo"
@@ -42,9 +44,6 @@ class OpenApiIngredientService(
         private const val RESPONSE_TYPE = "json"
         private const val DEFAULT_PAGE_NO = 1
         private const val DEFAULT_NUM_OF_ROWS = 5
-        private const val ENCODING_TYPE = "UTF-8"
-
-        private const val HEADER_VALUE_JSON = "application/json"
 
         private const val API_NO_DATA_MSG = "NODATA_ERROR"
 
@@ -75,27 +74,33 @@ class OpenApiIngredientService(
         serviceKey: String,
         apiUrl: String
     ): List<IngredientResponse> {
-        val encodedKeyword = URLEncoder.encode(keyword, ENCODING_TYPE)
+
+        val encodedKeyword = URLEncoder.encode(keyword, StandardCharsets.UTF_8)
+
+        val uri = UriComponentsBuilder
+            .fromHttpUrl(apiUrl)
+            .queryParam(QUERY_SERVICE_KEY, serviceKey)
+            .queryParam(QUERY_TYPE, RESPONSE_TYPE)
+            .queryParam(paramName, encodedKeyword)
+            .queryParam(QUERY_PAGE_NO, DEFAULT_PAGE_NO)
+            .queryParam(QUERY_NUM_OF_ROWS, DEFAULT_NUM_OF_ROWS)
+            .build(true)
+            .toUri()
 
         return try {
             val response = webClient.get()
-                .uri { builder ->
-                    builder
-                        .path(apiUrl)
-                        .queryParam(QUERY_SERVICE_KEY, serviceKey)
-                        .queryParam(QUERY_TYPE, RESPONSE_TYPE)
-                        .queryParam(paramName, encodedKeyword)
-                        .queryParam(QUERY_PAGE_NO, DEFAULT_PAGE_NO)
-                        .queryParam(QUERY_NUM_OF_ROWS, DEFAULT_NUM_OF_ROWS)
-                        .build()
-                }
-                .header(HttpHeaders.ACCEPT, HEADER_VALUE_JSON)
+                .uri(uri)
+                .header(HttpHeaders.ACCEPT, MediaType.APPLICATION_JSON_VALUE)
                 .retrieve()
                 .awaitBody<Map<String, Any>>()
 
             verifyFoodExistence(response, keyword)
+
         } catch (e: Exception) {
-            throw BusinessException(IngredientCode.OPEN_API_INGREDIENT_ERROR_01, HttpStatus.INTERNAL_SERVER_ERROR)
+            throw BusinessException(
+                IngredientCode.OPEN_API_INGREDIENT_ERROR_01,
+                HttpStatus.INTERNAL_SERVER_ERROR
+            )
         }
     }
 
