@@ -5,11 +5,11 @@ import com.example.home_recipe.controller.ingredient.dto.response.Source
 import com.example.home_recipe.global.exception.BusinessException
 import com.example.home_recipe.global.response.code.IngredientCode
 import org.springframework.beans.factory.annotation.Value
+import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Service
 import org.springframework.web.reactive.function.client.WebClient
 import org.springframework.web.reactive.function.client.awaitBody
-import java.net.URI
 import java.net.URLEncoder
 
 @Service
@@ -44,8 +44,7 @@ class OpenApiIngredientService(
         private const val DEFAULT_NUM_OF_ROWS = 5
         private const val ENCODING_TYPE = "UTF-8"
 
-        private const val HEADER_NAME = "Accept"
-        private const val HEADER_VALUE = "application/json"
+        private const val HEADER_VALUE_JSON = "application/json"
 
         private const val API_NO_DATA_MSG = "NODATA_ERROR"
 
@@ -55,6 +54,8 @@ class OpenApiIngredientService(
         private const val KEY_ITEMS = "items"
         private const val KEY_RESULT_MSG = "resultMsg"
     }
+
+    private val webClient: WebClient = webClientBuilder.build()
 
     suspend fun searchExternalFood(keyword: String): List<IngredientResponse> {
         for (level in FOOD_SEARCH_LEVELS) {
@@ -76,16 +77,19 @@ class OpenApiIngredientService(
     ): List<IngredientResponse> {
         val encodedKeyword = URLEncoder.encode(keyword, ENCODING_TYPE)
 
-        val finalUrl = "${apiUrl}?$QUERY_SERVICE_KEY=$serviceKey" +
-                "&$QUERY_TYPE=$RESPONSE_TYPE" +
-                "&$paramName=$encodedKeyword" +
-                "&$QUERY_PAGE_NO=$DEFAULT_PAGE_NO" +
-                "&$QUERY_NUM_OF_ROWS=$DEFAULT_NUM_OF_ROWS"
-
         return try {
-            val response = webClientBuilder.build().get()
-                .uri(URI(finalUrl))
-                .header(HEADER_NAME, HEADER_VALUE)
+            val response = webClient.get()
+                .uri { builder ->
+                    builder
+                        .path(apiUrl)
+                        .queryParam(QUERY_SERVICE_KEY, serviceKey)
+                        .queryParam(QUERY_TYPE, RESPONSE_TYPE)
+                        .queryParam(paramName, encodedKeyword)
+                        .queryParam(QUERY_PAGE_NO, DEFAULT_PAGE_NO)
+                        .queryParam(QUERY_NUM_OF_ROWS, DEFAULT_NUM_OF_ROWS)
+                        .build()
+                }
+                .header(HttpHeaders.ACCEPT, HEADER_VALUE_JSON)
                 .retrieve()
                 .awaitBody<Map<String, Any>>()
 
