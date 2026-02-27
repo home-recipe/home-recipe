@@ -138,8 +138,8 @@ class RefrigeratorControllerTest {
         mockMvc.perform(get("/api/refrigerator").with(authentication(auth)))
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.response.data.myRefrigerator").isArray)
-            .andExpect(jsonPath("$.response.data.myRefrigerator.length()").value(4))
+            .andExpect(jsonPath("$.response.data.myRefrigerator.length()").value(5))
             .andExpect(jsonPath("$.response.data.myRefrigerator[*].name")
-                .value(org.hamcrest.Matchers.containsInAnyOrder("당근", "쌀", "계란", "간장")))
+                .value(org.hamcrest.Matchers.containsInAnyOrder("당근", "쌀", "계란", "간장", "식용유")))
     }
 }
