@@ -32,11 +32,15 @@ class AuthController(
         servletResponse: HttpServletResponse
     ): ResponseEntity<ApiResponse<LoginResponse>> {
         val loginResponse = authService.login(request)
-        val clientType = servletRequest.getHeader(AuthHelper.CLIENT_TYPE_HEADER)
-        if (clientType.uppercase() == AuthHelper.WEB) {
-            authHelper.setRefreshTokenCookie(servletResponse, loginResponse.refreshToken)
+        val clientType = authHelper.resolveClientType(servletRequest)
+
+        val responseBody = if (clientType == AuthHelper.WEB) {
+            authHelper.setRefreshTokenCookie(servletResponse, loginResponse.refreshToken!!)
+            loginResponse.copy(refreshToken = null)
+        } else {
+            loginResponse
         }
-        return ApiResponse.success(loginResponse, AuthCode.AUTH_LOGIN_SUCCESS, HttpStatus.OK)
+        return ApiResponse.success(responseBody, AuthCode.AUTH_LOGIN_SUCCESS, HttpStatus.OK)
     }
 
     @PostMapping("/logout")
