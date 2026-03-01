@@ -19,6 +19,9 @@ jwt:
 openai:
   api-key: ${GEMINI_API_KEY}
 
+gemini:
+  api-key: ${GEMINI_API_KEY}
+
 cloud:
   aws:
     s3:
