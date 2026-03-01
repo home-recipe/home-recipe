@@ -5,24 +5,18 @@ import com.example.home_recipe.controller.recipe.response.RecipeDecision
 import com.example.home_recipe.controller.recipe.response.RecipesResponse
 import com.example.home_recipe.domain.recipe.RecipeDetail
 import com.example.home_recipe.domain.recipe.RecipeSet
-import com.example.home_recipe.global.exception.BusinessException
-import com.example.home_recipe.global.response.code.RecipeCode
 import com.example.home_recipe.global.util.IngredientHashUtil
 import com.example.home_recipe.repository.RecipeSetRepository
 import com.example.home_recipe.service.refrigerator.RefrigeratorService
 import com.example.home_recipe.service.storage.ImageStorageService
 import com.fasterxml.jackson.databind.ObjectMapper
-import com.openai.client.OpenAIClientAsync
-import com.openai.models.ChatModel
-import com.openai.models.chat.completions.ChatCompletionCreateParams
-import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.util.*
 
 @Service
 class RecipeService(
-    private val openAiClient: OpenAIClientAsync,
+    private val geminiTextService: GeminiTextService,
     val refrigeratorService: RefrigeratorService,
     private val recipeSetRepository: RecipeSetRepository,
     private val objectMapper: ObjectMapper,
@@ -40,7 +34,7 @@ class RecipeService(
             return toResponse(cached)
         }
 
-        val aiResponse = callOpenAi(ingredients)
+        val aiResponse = callGemini(ingredients)
 
         val recipeSet = RecipeSet(
             id = cacheKey,
@@ -73,26 +67,12 @@ class RecipeService(
         return imageStorageService.upload(imageBytes, fileName, "image/png")
     }
 
-    private fun callOpenAi(ingredients: List<String>): RecipesResponse {
-        val params = ChatCompletionCreateParams.builder()
-            .addSystemMessage(RecipePrompt.SYSTEM_PROMPT)
-            .addUserMessage(RecipePrompt.userPrompt(ingredients))
-            .model(ChatModel.GPT_5_MINI)
-            .responseFormat(RecipesResponse::class.java)
-            .build()
-
-        val response = openAiClient.chat().completions().create(params).join()
-
-        val contents = response.choices()
-            .firstOrNull()
-            ?.message()
-            ?.content()
-
-        if (contents == null) {
-            throw BusinessException(RecipeCode.RECIPE_ERROR_001, HttpStatus.INTERNAL_SERVER_ERROR)
-        }
-
-        return contents.get()
+    private fun callGemini(ingredients: List<String>): RecipesResponse {
+        return geminiTextService.generate(
+            systemPrompt = RecipePrompt.SYSTEM_PROMPT,
+            userPrompt = RecipePrompt.userPrompt(ingredients),
+            responseType = RecipesResponse::class.java
+        )
     }
 
     /** RecipeSet 엔티티를 Response DTO로 변환한다 */

@@ -16,9 +16,6 @@ jwt:
   access-expiration: ${JWT_ACCESS_EXPIRATION}
   refresh-expiration: ${JWT_REFRESH_EXPIRATION}
 
-openai:
-  api-key: ${GEMINI_API_KEY}
-
 gemini:
   api-key: ${GEMINI_API_KEY}
 
