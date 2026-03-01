@@ -1,24 +1,33 @@
 package com.example.home_recipe.service.storage
 
 import org.slf4j.LoggerFactory
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
+import software.amazon.awssdk.core.sync.RequestBody
+import software.amazon.awssdk.services.s3.S3Client
+import software.amazon.awssdk.services.s3.model.PutObjectRequest
 
 @Service
-class S3ImageStorageService : ImageStorageService {
+class S3ImageStorageService(
+    private val s3Client: S3Client,
+    @Value("\${cloud.aws.s3.bucket}") private val bucketName: String
+) : ImageStorageService {
 
     private val log = LoggerFactory.getLogger(S3ImageStorageService::class.java)
 
     override fun upload(imageBytes: ByteArray, fileName: String, contentType: String): String {
-        // TODO: 실제 S3 업로드 로직 구현
-        // val putRequest = PutObjectRequest.builder()
-        //     .bucket(bucketName)
-        //     .key("recipes/$fileName")
-        //     .contentType(contentType)
-        //     .build()
-        // s3Client.putObject(putRequest, RequestBody.fromBytes(imageBytes))
-        // return "https://$bucketName.s3.ap-northeast-2.amazonaws.com/recipes/$fileName"
+        val key = "recipes/$fileName"
 
-        log.warn("S3 업로드가 아직 구현되지 않았습니다. placeholder URL을 반환합니다. fileName={}", fileName)
-        return "https://placeholder-bucket.s3.ap-northeast-2.amazonaws.com/recipes/$fileName"
+        val putRequest = PutObjectRequest.builder()
+            .bucket(bucketName)
+            .key(key)
+            .contentType(contentType)
+            .build()
+
+        s3Client.putObject(putRequest, RequestBody.fromBytes(imageBytes))
+
+        val url = "https://$bucketName.s3.ap-northeast-2.amazonaws.com/$key"
+        log.info("S3 이미지 업로드 완료: {}", url)
+        return url
     }
 }
