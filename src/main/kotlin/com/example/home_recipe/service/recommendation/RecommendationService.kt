@@ -1,21 +1,19 @@
 package com.example.home_recipe.service.recommendation
 
 import com.example.home_recipe.controller.recommendation.dto.RecommendationsResponse
-import com.example.home_recipe.domain.recipe.RecipeCache
+import com.example.home_recipe.domain.recipe.RecommendationCache
 import com.example.home_recipe.global.util.IngredientHashUtil
-import com.example.home_recipe.repository.RecipeCacheRepository
+import com.example.home_recipe.repository.RecommendationCacheRepository
+import com.example.home_recipe.service.recipe.GeminiTextService
 import com.example.home_recipe.service.refrigerator.RefrigeratorService
 import com.fasterxml.jackson.databind.ObjectMapper
-import com.openai.client.OpenAIClientAsync
-import com.openai.models.ChatModel
-import com.openai.models.chat.completions.ChatCompletionCreateParams
 import org.springframework.stereotype.Service
 
 @Service
 class RecommendationService(
-    private val openAiClient: OpenAIClientAsync,
+    private val geminiTextService: GeminiTextService,
     val refrigeratorService: RefrigeratorService,
-    private val recipeCacheRepository: RecipeCacheRepository,
+    private val recommendationCacheRepository: RecommendationCacheRepository,
     private val objectMapper: ObjectMapper
 ) {
 
@@ -23,42 +21,33 @@ class RecommendationService(
         val ingredients = refrigeratorService.getMyIngredientsOnlyName(email)
         val cacheKey = IngredientHashUtil.generateCacheKey("recommendation", ingredients)
 
-        val cached = recipeCacheRepository.findById(cacheKey)
+        val cached = recommendationCacheRepository.findById(cacheKey)
         if (cached.isPresent) {
-            return objectMapper.readValue(cached.get().recipeContent, RecommendationsResponse::class.java)
+            return objectMapper.readValue(cached.get().recommendationContent, RecommendationsResponse::class.java)
         }
 
-        val result = callOpenAi(ingredients)
+        val result = callGemini(ingredients)
 
-        val cacheEntry = RecipeCache(
+        val cacheEntry = RecommendationCache(
             id = cacheKey,
-            recipeContent = objectMapper.writeValueAsString(result)
+            recommendationContent = objectMapper.writeValueAsString(result)
         )
-        recipeCacheRepository.save(cacheEntry)
+        recommendationCacheRepository.save(cacheEntry)
 
         return result
     }
 
-    private fun callOpenAi(ingredients: List<String>): RecommendationsResponse {
-        val params = ChatCompletionCreateParams.builder()
-            .addSystemMessage(RecommendationPrompt.SYSTEM_PROMPT)
-            .addUserMessage(RecommendationPrompt.userPrompt(ingredients))
-            .model(ChatModel.GPT_5_MINI)
-            .responseFormat(RecommendationsResponse::class.java)
-            .build()
+    private fun callGemini(ingredients: List<String>): RecommendationsResponse {
+        val result = geminiTextService.generate(
+            systemPrompt = RecommendationPrompt.SYSTEM_PROMPT,
+            userPrompt = RecommendationPrompt.userPrompt(ingredients),
+            responseType = RecommendationsResponse::class.java
+        )
 
-        val response = openAiClient.chat().completions().create(params).join()
-
-        val contents = response.choices()
-            .firstOrNull()
-            ?.message()
-            ?.content()
-            ?.get()
-
-        if (contents == null || contents.recommendations.isEmpty()) {
+        if (result.recommendations.isEmpty()) {
             throw IllegalStateException("추천 가능한 레시피가 없어요 ㅠ_ㅠ")
         }
 
-        return contents
+        return result
     }
 }
