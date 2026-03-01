@@ -9,6 +9,7 @@ import com.example.home_recipe.global.util.IngredientHashUtil
 import com.example.home_recipe.repository.RecipeSetRepository
 import com.example.home_recipe.service.refrigerator.RefrigeratorService
 import com.example.home_recipe.service.storage.ImageStorageService
+import com.example.home_recipe.service.storage.S3ImageStorageService
 import com.fasterxml.jackson.databind.ObjectMapper
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -21,7 +22,7 @@ class RecipeService(
     private val recipeSetRepository: RecipeSetRepository,
     private val objectMapper: ObjectMapper,
     private val geminiImageService: GeminiImageService,
-    private val imageStorageService: ImageStorageService
+    private val imageStorageService: S3ImageStorageService
 ) {
 
     @Transactional
@@ -75,7 +76,6 @@ class RecipeService(
         )
     }
 
-    /** RecipeSet 엔티티를 Response DTO로 변환한다 */
     private fun toResponse(recipeSet: RecipeSet): RecipesResponse {
         return RecipesResponse(
             decision = RecipeDecision.valueOf(recipeSet.decision.name),

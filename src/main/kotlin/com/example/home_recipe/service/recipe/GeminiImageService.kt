@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
+import org.springframework.web.reactive.function.client.ExchangeStrategies
 import org.springframework.web.reactive.function.client.WebClient
 import java.util.*
 
@@ -17,6 +18,11 @@ class GeminiImageService(
 
     private val webClient = WebClient.builder()
         .baseUrl("https://generativelanguage.googleapis.com")
+        .exchangeStrategies(
+            ExchangeStrategies.builder()
+                .codecs { it.defaultCodecs().maxInMemorySize(10 * 1024 * 1024) }
+                .build()
+        )
         .build()
 
     fun generateImage(recipeName: String): ByteArray? {
@@ -35,7 +41,7 @@ class GeminiImageService(
             )
 
             val response = webClient.post()
-                .uri("/v1/models/gemini-1.5-flash:generateContent?key=$apiKey")
+                .uri("/v1beta/models/gemini-3.1-flash-image-preview:generateContent?key=$apiKey")
                 .header("Content-Type", "application/json")
                 .bodyValue(objectMapper.writeValueAsString(requestBody))
                 .retrieve()
