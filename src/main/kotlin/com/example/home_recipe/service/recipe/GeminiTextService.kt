@@ -5,6 +5,7 @@ import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
 import org.springframework.web.reactive.function.client.WebClient
+import org.springframework.web.reactive.function.client.WebClientResponseException
 
 @Service
 class GeminiTextService(
@@ -20,7 +21,7 @@ class GeminiTextService(
 
     fun <T> generate(systemPrompt: String, userPrompt: String, responseType: Class<T>): T {
         val requestBody = mapOf(
-            "system_instruction" to mapOf(
+            "systemInstruction" to mapOf(
                 "parts" to listOf(mapOf("text" to systemPrompt))
             ),
             "contents" to listOf(
@@ -34,13 +35,21 @@ class GeminiTextService(
             )
         )
 
-        val response = webClient.post()
-            .uri("/v1beta/models/gemini-2.0-flash-exp:generateContent?key=$apiKey")
-            .header("Content-Type", "application/json")
-            .bodyValue(objectMapper.writeValueAsString(requestBody))
-            .retrieve()
-            .bodyToMono(String::class.java)
-            .block()
+        val jsonBody = objectMapper.writeValueAsString(requestBody)
+        log.info("Gemini 요청 body: {}", jsonBody)
+
+        val response = try {
+            webClient.post()
+                .uri("/v1beta/models/gemini-2.5-flash:generateContent?key=$apiKey")
+                .header("Content-Type", "application/json")
+                .bodyValue(jsonBody)
+                .retrieve()
+                .bodyToMono(String::class.java)
+                .block()
+        } catch (e: WebClientResponseException) {
+            log.error("Gemini API 에러: status={}, body={}", e.statusCode, e.responseBodyAsString)
+            throw e
+        }
 
         val text = extractText(response)
             ?: throw IllegalStateException("Gemini 응답에서 텍스트를 추출할 수 없습니다")
