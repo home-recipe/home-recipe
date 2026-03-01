@@ -35,7 +35,7 @@ class GeminiImageService(
             )
 
             val response = webClient.post()
-                .uri("/v1beta/models/gemini-2.0-flash-exp:generateContent?key=$apiKey")
+                .uri("/v1/models/gemini-1.5-flash:generateContent?key=$apiKey")
                 .header("Content-Type", "application/json")
                 .bodyValue(objectMapper.writeValueAsString(requestBody))
                 .retrieve()
