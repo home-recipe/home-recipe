@@ -11,16 +11,13 @@ spring:
         dialect: org.hibernate.dialect.MySQLDialect
     open-in-view: false
 
-  elasticsearch:
-    uris: ${ELASTICSEARCH_URIS:http://localhost:9200}
-
 jwt:
   secret: ${JWT_SECRET}
   access-expiration: ${JWT_ACCESS_EXPIRATION}
   refresh-expiration: ${JWT_REFRESH_EXPIRATION}
 
 openai:
-  api-key: ${OPENAI_API_KEY}
+  api-key: ${GEMINI_API_KEY}
 
 #actuator
 management:
