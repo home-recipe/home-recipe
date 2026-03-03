@@ -7,9 +7,9 @@ import com.github.benmanes.caffeine.cache.Caffeine
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.reactor.awaitSingle
 import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.sync.withPermit
-import kotlinx.coroutines.reactor.awaitSingle
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.core.ParameterizedTypeReference
@@ -46,7 +46,34 @@ class OpenApiIngredientService(
         private const val MAX_POSITIVE_CACHE_SIZE = 10_000L
         private const val MAX_NEGATIVE_CACHE_SIZE = 20_000L
 
-        private val FOOD_SEARCH_LEVELS = listOf("foodNm", "foodLv4Nm", "foodLv5Nm", "foodLv6Nm")
+        private const val LEVEL_FOOD_NM = "foodNm"
+        private const val LEVEL_FOOD_LV4_NM = "foodLv4Nm"
+        private const val LEVEL_FOOD_LV5_NM = "foodLv5Nm"
+        private const val LEVEL_FOOD_LV6_NM = "foodLv6Nm"
+
+        private val FOOD_SEARCH_LEVELS = listOf(
+            LEVEL_FOOD_NM,
+            LEVEL_FOOD_LV4_NM,
+            LEVEL_FOOD_LV5_NM,
+            LEVEL_FOOD_LV6_NM
+        )
+
+        private const val QUERY_SERVICE_KEY = "serviceKey"
+        private const val QUERY_TYPE = "type"
+        private const val QUERY_PAGE_NO = "pageNo"
+        private const val QUERY_NUM_OF_ROWS = "numOfRows"
+
+        private const val RESPONSE_TYPE = "json"
+        private const val DEFAULT_PAGE_NO = 1
+        private const val DEFAULT_NUM_OF_ROWS = 5
+
+        private const val API_NO_DATA_MSG = "NODATA_ERROR"
+
+        private const val KEY_RESPONSE = "response"
+        private const val KEY_HEADER = "header"
+        private const val KEY_BODY = "body"
+        private const val KEY_ITEMS = "items"
+        private const val KEY_RESULT_MSG = "resultMsg"
     }
 
     private val webClient: WebClient = webClientBuilder.build()
@@ -63,67 +90,104 @@ class OpenApiIngredientService(
             .expireAfterWrite(NEGATIVE_CACHE_TTL_MINUTES, TimeUnit.MINUTES)
             .build()
 
-    suspend fun searchExternalFood(keyword: String): List<IngredientResponse> {
+    private data class SearchTarget(
+        val apiUrl: String,
+        val serviceKey: String,
+        val level: String,
+        val sourceName: String
+    )
 
-        positiveCache.getIfPresent(keyword)?.let {
-            log.debug("Positive cache hit - {}", keyword)
+    suspend fun searchExternalFood(keyword: String): List<IngredientResponse> {
+        val cacheKey = keyword
+
+        positiveCache.getIfPresent(cacheKey)?.let {
+            log.debug("Positive cache hit - {}", cacheKey)
             return it
         }
-
-        if (negativeCache.getIfPresent(keyword) == true) {
-            log.debug("Negative cache hit - {}", keyword)
+        if (negativeCache.getIfPresent(cacheKey) == true) {
+            log.debug("Negative cache hit - {}", cacheKey)
             return emptyList()
         }
 
-        val raw = searchLevelsInParallel(keyword, rawFoodKey, rawFoodUrl)
-        if (raw.isNotEmpty()) {
-            positiveCache.put(keyword, raw)
-            negativeCache.invalidate(keyword)
-            return raw
+        val targets = buildTargets()
+
+        val result = searchTargetsInParallel(keyword, targets)
+        if (result.isNotEmpty()) {
+            positiveCache.put(cacheKey, result)
+            negativeCache.invalidate(cacheKey)
+            return result
         }
 
-        val process = searchLevelsInParallel(keyword, processFoodKey, processFoodUrl)
-        if (process.isNotEmpty()) {
-            positiveCache.put(keyword, process)
-            negativeCache.invalidate(keyword)
-            return process
-        }
-
-        negativeCache.put(keyword, true)
-        positiveCache.invalidate(keyword)
-
+        negativeCache.put(cacheKey, true)
+        positiveCache.invalidate(cacheKey)
         return emptyList()
     }
 
-    private suspend fun searchLevelsInParallel(
+    private fun buildTargets(): List<SearchTarget> {
+        val rawTargets = FOOD_SEARCH_LEVELS.map { level ->
+            SearchTarget(
+                apiUrl = rawFoodUrl,
+                serviceKey = rawFoodKey,
+                level = level,
+                sourceName = "raw"
+            )
+        }
+        val processTargets = FOOD_SEARCH_LEVELS.map { level ->
+            SearchTarget(
+                apiUrl = processFoodUrl,
+                serviceKey = processFoodKey,
+                level = level,
+                sourceName = "process"
+            )
+        }
+        return rawTargets + processTargets
+    }
+
+    private suspend fun searchTargetsInParallel(
         keyword: String,
-        serviceKey: String,
-        apiUrl: String
+        targets: List<SearchTarget>
     ): List<IngredientResponse> = coroutineScope {
 
-        val channel = Channel<List<IngredientResponse>>(capacity = Channel.BUFFERED)
+        val channel = Channel<Pair<SearchTarget, List<IngredientResponse>>>(capacity = Channel.BUFFERED)
 
-        val jobs = FOOD_SEARCH_LEVELS.map { level ->
+        val jobs = targets.map { target ->
             async {
                 try {
-                    val result = callApi(level, keyword, serviceKey, apiUrl)
-                    channel.send(result)
+                    val result = callApi(
+                        paramName = target.level,
+                        keyword = keyword,
+                        serviceKey = target.serviceKey,
+                        apiUrl = target.apiUrl
+                    )
+                    channel.send(target to result)
                 } catch (e: Exception) {
-                    log.warn("External API error (degraded to empty) - keyword={}, level={}", keyword, level)
-                    channel.send(emptyList())
+                    // Commit 7a 정책 유지: 외부 오류는 empty로 degrade
+                    log.warn(
+                        "External API error (degraded to empty) - keyword={}, source={}, level={}",
+                        keyword, target.sourceName, target.level
+                    )
+                    channel.send(target to emptyList())
                 }
             }
         }
 
-        repeat(jobs.size) {
-            val result = channel.receive()
-            if (result.isNotEmpty()) {
-                jobs.forEach { it.cancel() }
-                return@coroutineScope result
+        try {
+            repeat(jobs.size) {
+                val (target, result) = channel.receive()
+                if (result.isNotEmpty()) {
+                    log.info(
+                        "OpenAPI hit -> early return - keyword={}, source={}, level={}",
+                        keyword, target.sourceName, target.level
+                    )
+                    jobs.forEach { it.cancel() }
+                    return@coroutineScope result
+                }
             }
+            emptyList()
+        } finally {
+            channel.close()
+            jobs.forEach { it.cancel() }
         }
-
-        emptyList()
     }
 
     private suspend fun callApi(
@@ -137,11 +201,11 @@ class OpenApiIngredientService(
 
         val uri = UriComponentsBuilder
             .fromHttpUrl(apiUrl)
-            .queryParam("serviceKey", serviceKey)
-            .queryParam("type", "json")
+            .queryParam(QUERY_SERVICE_KEY, serviceKey)
+            .queryParam(QUERY_TYPE, RESPONSE_TYPE)
             .queryParam(paramName, encodedKeyword)
-            .queryParam("pageNo", 1)
-            .queryParam("numOfRows", 5)
+            .queryParam(QUERY_PAGE_NO, DEFAULT_PAGE_NO)
+            .queryParam(QUERY_NUM_OF_ROWS, DEFAULT_NUM_OF_ROWS)
             .build(true)
             .toUri()
 
@@ -161,16 +225,16 @@ class OpenApiIngredientService(
         keyword: String
     ): List<IngredientResponse> {
 
-        val responseMap = response["response"] as? Map<*, *> ?: return emptyList()
-        val header = responseMap["header"] as? Map<*, *>
-        val body = responseMap["body"] as? Map<*, *>
+        val responseMap = response[KEY_RESPONSE] as? Map<*, *> ?: return emptyList()
+        val header = responseMap[KEY_HEADER] as? Map<*, *>
+        val body = responseMap[KEY_BODY] as? Map<*, *>
 
-        val resultMsg = header?.get("resultMsg") as? String
-        if (resultMsg == "NODATA_ERROR") {
+        val resultMsg = header?.get(KEY_RESULT_MSG) as? String
+        if (resultMsg == API_NO_DATA_MSG) {
             return emptyList()
         }
 
-        val items = body?.get("items") as? List<*>
+        val items = body?.get(KEY_ITEMS) as? List<*>
         if (items.isNullOrEmpty()) {
             return emptyList()
         }
