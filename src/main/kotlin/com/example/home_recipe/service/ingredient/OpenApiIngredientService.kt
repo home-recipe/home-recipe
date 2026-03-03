@@ -6,14 +6,13 @@ import com.github.benmanes.caffeine.cache.Cache
 import com.github.benmanes.caffeine.cache.Caffeine
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.async
-import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.reactor.awaitSingle
 import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.sync.withPermit
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
-import org.springframework.core.ParameterizedTypeReference
 import org.springframework.http.HttpHeaders
 import org.springframework.http.MediaType
 import org.springframework.stereotype.Service
@@ -48,6 +47,8 @@ class OpenApiIngredientService(
         private const val MAX_POSITIVE_CACHE_SIZE = 10_000L
         private const val MAX_NEGATIVE_CACHE_SIZE = 20_000L
 
+        private const val API_NO_DATA_MSG = "NODATA_ERROR"
+
         private val FOOD_SEARCH_LEVELS =
             listOf("foodNm", "foodLv4Nm", "foodLv5Nm", "foodLv6Nm")
     }
@@ -69,39 +70,24 @@ class OpenApiIngredientService(
     private val inFlight =
         ConcurrentHashMap<String, CompletableDeferred<List<IngredientResponse>>>()
 
-    private fun normalizeKeyword(keyword: String): String {
-        return keyword
-            .trim()
-            .replace(Regex("\\s+"), " ")
-            .lowercase()
-    }
+    private fun normalizeKeyword(keyword: String): String =
+        keyword.trim().replace(Regex("\\s+"), " ").lowercase()
 
     suspend fun searchExternalFood(keyword: String): List<IngredientResponse> {
 
         val cacheKey = normalizeKeyword(keyword)
 
-        positiveCache.getIfPresent(cacheKey)?.let {
-            log.debug("Positive cache hit - {}", cacheKey)
-            return it
-        }
-
-        if (negativeCache.getIfPresent(cacheKey) == true) {
-            log.debug("Negative cache hit - {}", cacheKey)
-            return emptyList()
-        }
+        positiveCache.getIfPresent(cacheKey)?.let { return it }
+        if (negativeCache.getIfPresent(cacheKey) == true) return emptyList()
 
         val myDeferred = CompletableDeferred<List<IngredientResponse>>()
         val existing = inFlight.putIfAbsent(cacheKey, myDeferred)
 
-        if (existing != null) {
-            log.debug("Single-flight join - {}", cacheKey)
-            return existing.await()
-        }
+        if (existing != null) return existing.await()
 
         return try {
 
             val targets = buildTargets()
-
             val result = searchTargetsInParallel(cacheKey, targets)
 
             if (result.isNotEmpty()) {
@@ -109,16 +95,11 @@ class OpenApiIngredientService(
                 negativeCache.invalidate(cacheKey)
             } else {
                 negativeCache.put(cacheKey, true)
-                positiveCache.invalidate(cacheKey)
             }
 
             myDeferred.complete(result)
             result
 
-        } catch (e: Exception) {
-            log.warn("External API degraded to empty - {}", cacheKey, e)
-            myDeferred.complete(emptyList())
-            emptyList()
         } finally {
             inFlight.remove(cacheKey, myDeferred)
         }
@@ -158,6 +139,7 @@ class OpenApiIngredientService(
                     )
                     channel.send(result)
                 } catch (e: Exception) {
+                    log.warn("External API error (degraded) - {}", keyword)
                     channel.send(emptyList())
                 }
             }
@@ -202,8 +184,7 @@ class OpenApiIngredientService(
             .uri(uri)
             .header(HttpHeaders.ACCEPT, MediaType.APPLICATION_JSON_VALUE)
             .retrieve()
-            .bodyToMono(object :
-                ParameterizedTypeReference<Map<String, Any>>() {})
+            .bodyToMono(OpenApiFoodResponse::class.java)
             .timeout(Duration.ofMillis(EXTERNAL_API_TIMEOUT_MS))
             .awaitSingle()
 
@@ -211,21 +192,25 @@ class OpenApiIngredientService(
     }
 
     private fun verifyFoodExistence(
-        response: Map<String, Any>,
+        response: OpenApiFoodResponse,
         keyword: String
     ): List<IngredientResponse> {
 
-        val responseMap = response["response"] as? Map<*, *>
-            ?: return emptyList()
+        val wrapper = response.response ?: return emptyList()
 
-        val header = responseMap["header"] as? Map<*, *>
-        val body = responseMap["body"] as? Map<*, *>
+        if (wrapper.header?.resultMsg == API_NO_DATA_MSG)
+            return emptyList()
 
-        val resultMsg = header?.get("resultMsg") as? String
-        if (resultMsg == "NODATA_ERROR") return emptyList()
+        val items = wrapper.body?.items
 
-        val items = body?.get("items") as? List<*>
-        if (items.isNullOrEmpty()) return emptyList()
+        val isEmpty = when (items) {
+            null -> true
+            is Collection<*> -> items.isEmpty()
+            is Map<*, *> -> items.isEmpty()
+            else -> false
+        }
+
+        if (isEmpty) return emptyList()
 
         return listOf(
             IngredientResponse(
