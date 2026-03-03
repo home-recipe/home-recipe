@@ -4,6 +4,8 @@ import com.example.home_recipe.controller.ingredient.dto.response.IngredientResp
 import com.example.home_recipe.controller.ingredient.dto.response.Source
 import com.example.home_recipe.global.exception.BusinessException
 import com.example.home_recipe.global.response.code.IngredientCode
+import com.github.benmanes.caffeine.cache.Cache
+import com.github.benmanes.caffeine.cache.Caffeine
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.channels.Channel
@@ -20,8 +22,8 @@ import org.springframework.web.reactive.function.client.awaitBody
 import org.springframework.web.util.UriComponentsBuilder
 import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
-import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentLinkedQueue
+import java.util.concurrent.TimeUnit
 
 @Service
 class OpenApiIngredientService(
@@ -38,11 +40,11 @@ class OpenApiIngredientService(
         private const val MAX_CONCURRENT_EXTERNAL_CALLS = 8
         private val externalCallSemaphore = Semaphore(MAX_CONCURRENT_EXTERNAL_CALLS)
 
-        private const val POSITIVE_CACHE_TTL_MS = 10 * 60 * 1000L // 10분
-        private const val NEGATIVE_CACHE_TTL_MS = 5 * 60 * 1000L  // 5분
+        private const val POSITIVE_CACHE_TTL_MINUTES = 10L
+        private const val NEGATIVE_CACHE_TTL_MINUTES = 5L
 
-        private const val MAX_POSITIVE_CACHE_SIZE = 10_000
-        private const val MAX_NEGATIVE_CACHE_SIZE = 20_000
+        private const val MAX_POSITIVE_CACHE_SIZE = 10_000L
+        private const val MAX_NEGATIVE_CACHE_SIZE = 20_000L
 
         private const val LEVEL_FOOD_NM = "foodNm"
         private const val LEVEL_FOOD_LV4_NM = "foodLv4Nm"
@@ -76,79 +78,48 @@ class OpenApiIngredientService(
 
     private val webClient: WebClient = webClientBuilder.build()
 
-    private data class CacheEntry<T>(
-        val value: T,
-        val expiresAtEpochMs: Long
-    )
+    private val positiveCache: Cache<String, List<IngredientResponse>> =
+        Caffeine.newBuilder()
+            .maximumSize(MAX_POSITIVE_CACHE_SIZE)
+            .expireAfterWrite(POSITIVE_CACHE_TTL_MINUTES, TimeUnit.MINUTES)
+            .build()
 
-    private val positiveCache = ConcurrentHashMap<String, CacheEntry<List<IngredientResponse>>>()
-    private val negativeCache = ConcurrentHashMap<String, CacheEntry<Unit>>()
+    private val negativeCache: Cache<String, Boolean> =
+        Caffeine.newBuilder()
+            .maximumSize(MAX_NEGATIVE_CACHE_SIZE)
+            .expireAfterWrite(NEGATIVE_CACHE_TTL_MINUTES, TimeUnit.MINUTES)
+            .build()
 
     suspend fun searchExternalFood(keyword: String): List<IngredientResponse> {
         val cacheKey = keyword
 
-        getPositiveCache(cacheKey)?.let { cached ->
+        positiveCache.getIfPresent(cacheKey)?.let { cached ->
             log.debug("Positive cache hit - keyword: {}", keyword)
             return cached
         }
 
-        if (isNegativeCacheHit(cacheKey)) {
+        if (negativeCache.getIfPresent(cacheKey) == true) {
             log.debug("Negative cache hit - keyword: {}", keyword)
             return emptyList()
         }
 
         val rawResult = searchLevelsInParallel(keyword, rawFoodKey, rawFoodUrl)
         if (rawResult.isNotEmpty()) {
-            putPositiveCache(cacheKey, rawResult)
+            positiveCache.put(cacheKey, rawResult)
+            negativeCache.invalidate(cacheKey)
             return rawResult
         }
 
         val processResult = searchLevelsInParallel(keyword, processFoodKey, processFoodUrl)
         if (processResult.isNotEmpty()) {
-            putPositiveCache(cacheKey, processResult)
+            positiveCache.put(cacheKey, processResult)
+            negativeCache.invalidate(cacheKey)
             return processResult
         }
 
-        putNegativeCache(cacheKey)
+        negativeCache.put(cacheKey, true)
+        positiveCache.invalidate(cacheKey)
         return emptyList()
-    }
-
-    private fun nowMs(): Long = System.currentTimeMillis()
-
-    private fun getPositiveCache(key: String): List<IngredientResponse>? {
-        val entry = positiveCache[key] ?: return null
-        if (entry.expiresAtEpochMs <= nowMs()) {
-            positiveCache.remove(key)
-            return null
-        }
-        return entry.value
-    }
-
-    private fun isNegativeCacheHit(key: String): Boolean {
-        val entry = negativeCache[key] ?: return false
-        if (entry.expiresAtEpochMs <= nowMs()) {
-            negativeCache.remove(key)
-            return false
-        }
-        return true
-    }
-
-    private fun putPositiveCache(key: String, value: List<IngredientResponse>) {
-        if (positiveCache.size >= MAX_POSITIVE_CACHE_SIZE) {
-            log.warn("Positive cache size exceeded. Clearing cache. size={}", positiveCache.size)
-            positiveCache.clear()
-        }
-        positiveCache[key] = CacheEntry(value = value, expiresAtEpochMs = nowMs() + POSITIVE_CACHE_TTL_MS)
-        negativeCache.remove(key)
-    }
-
-    private fun putNegativeCache(key: String) {
-        if (negativeCache.size >= MAX_NEGATIVE_CACHE_SIZE) {
-            log.warn("Negative cache size exceeded. Clearing cache. size={}", negativeCache.size)
-            negativeCache.clear()
-        }
-        negativeCache[key] = CacheEntry(value = Unit, expiresAtEpochMs = nowMs() + NEGATIVE_CACHE_TTL_MS)
-        positiveCache.remove(key)
     }
 
     private suspend fun searchLevelsInParallel(

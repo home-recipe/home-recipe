@@ -63,6 +63,8 @@ dependencies {
 	implementation("com.fasterxml.jackson.core:jackson-databind")
 
 	implementation("org.springframework.boot:spring-boot-starter-aop")
+
+    implementation("com.github.ben-manes.caffeine:caffeine:3.2.3")
 }
 
 kotlin {
