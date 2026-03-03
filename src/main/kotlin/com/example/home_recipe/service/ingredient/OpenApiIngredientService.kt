@@ -9,6 +9,7 @@ import com.github.benmanes.caffeine.cache.Caffeine
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.reactive.awaitSingle
 import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.sync.withPermit
 import org.slf4j.LoggerFactory
@@ -22,6 +23,7 @@ import org.springframework.web.reactive.function.client.awaitBody
 import org.springframework.web.util.UriComponentsBuilder
 import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
+import java.time.Duration
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.TimeUnit
 
@@ -39,6 +41,8 @@ class OpenApiIngredientService(
 
         private const val MAX_CONCURRENT_EXTERNAL_CALLS = 8
         private val externalCallSemaphore = Semaphore(MAX_CONCURRENT_EXTERNAL_CALLS)
+
+        private const val EXTERNAL_API_TIMEOUT_MS = 800L
 
         private const val POSITIVE_CACHE_TTL_MINUTES = 10L
         private const val NEGATIVE_CACHE_TTL_MINUTES = 5L
@@ -188,11 +192,17 @@ class OpenApiIngredientService(
                 .uri(uri)
                 .header(HttpHeaders.ACCEPT, MediaType.APPLICATION_JSON_VALUE)
                 .retrieve()
-                .awaitBody<Map<String, Any>>()
+                .bodyToMono(object : org.springframework.core.ParameterizedTypeReference<Map<String, Any>>() {})
+                .timeout(Duration.ofMillis(EXTERNAL_API_TIMEOUT_MS))
+                .awaitSingle()
 
             verifyFoodExistence(response, keyword)
+
         } catch (e: Exception) {
-            throw BusinessException(IngredientCode.OPEN_API_INGREDIENT_ERROR_01, HttpStatus.INTERNAL_SERVER_ERROR)
+            throw BusinessException(
+                IngredientCode.OPEN_API_INGREDIENT_ERROR_01,
+                HttpStatus.INTERNAL_SERVER_ERROR
+            )
         }
     }
 
