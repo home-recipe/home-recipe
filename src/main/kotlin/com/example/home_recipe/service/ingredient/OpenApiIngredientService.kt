@@ -20,6 +20,7 @@ import org.springframework.web.reactive.function.client.awaitBody
 import org.springframework.web.util.UriComponentsBuilder
 import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
+import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentLinkedQueue
 
 @Service
@@ -33,8 +34,15 @@ class OpenApiIngredientService(
 
     companion object {
         private val log = LoggerFactory.getLogger(OpenApiIngredientService::class.java)
+
         private const val MAX_CONCURRENT_EXTERNAL_CALLS = 8
         private val externalCallSemaphore = Semaphore(MAX_CONCURRENT_EXTERNAL_CALLS)
+
+        private const val POSITIVE_CACHE_TTL_MS = 10 * 60 * 1000L // 10분
+        private const val NEGATIVE_CACHE_TTL_MS = 5 * 60 * 1000L  // 5분
+
+        private const val MAX_POSITIVE_CACHE_SIZE = 10_000
+        private const val MAX_NEGATIVE_CACHE_SIZE = 20_000
 
         private const val LEVEL_FOOD_NM = "foodNm"
         private const val LEVEL_FOOD_LV4_NM = "foodLv4Nm"
@@ -68,11 +76,79 @@ class OpenApiIngredientService(
 
     private val webClient: WebClient = webClientBuilder.build()
 
-    suspend fun searchExternalFood(keyword: String): List<IngredientResponse> {
-        val rawResult = searchLevelsInParallel(keyword, rawFoodKey, rawFoodUrl)
-        if (rawResult.isNotEmpty()) return rawResult
+    private data class CacheEntry<T>(
+        val value: T,
+        val expiresAtEpochMs: Long
+    )
 
-        return searchLevelsInParallel(keyword, processFoodKey, processFoodUrl)
+    private val positiveCache = ConcurrentHashMap<String, CacheEntry<List<IngredientResponse>>>()
+    private val negativeCache = ConcurrentHashMap<String, CacheEntry<Unit>>()
+
+    suspend fun searchExternalFood(keyword: String): List<IngredientResponse> {
+        val cacheKey = keyword
+
+        getPositiveCache(cacheKey)?.let { cached ->
+            log.debug("Positive cache hit - keyword: {}", keyword)
+            return cached
+        }
+
+        if (isNegativeCacheHit(cacheKey)) {
+            log.debug("Negative cache hit - keyword: {}", keyword)
+            return emptyList()
+        }
+
+        val rawResult = searchLevelsInParallel(keyword, rawFoodKey, rawFoodUrl)
+        if (rawResult.isNotEmpty()) {
+            putPositiveCache(cacheKey, rawResult)
+            return rawResult
+        }
+
+        val processResult = searchLevelsInParallel(keyword, processFoodKey, processFoodUrl)
+        if (processResult.isNotEmpty()) {
+            putPositiveCache(cacheKey, processResult)
+            return processResult
+        }
+
+        putNegativeCache(cacheKey)
+        return emptyList()
+    }
+
+    private fun nowMs(): Long = System.currentTimeMillis()
+
+    private fun getPositiveCache(key: String): List<IngredientResponse>? {
+        val entry = positiveCache[key] ?: return null
+        if (entry.expiresAtEpochMs <= nowMs()) {
+            positiveCache.remove(key)
+            return null
+        }
+        return entry.value
+    }
+
+    private fun isNegativeCacheHit(key: String): Boolean {
+        val entry = negativeCache[key] ?: return false
+        if (entry.expiresAtEpochMs <= nowMs()) {
+            negativeCache.remove(key)
+            return false
+        }
+        return true
+    }
+
+    private fun putPositiveCache(key: String, value: List<IngredientResponse>) {
+        if (positiveCache.size >= MAX_POSITIVE_CACHE_SIZE) {
+            log.warn("Positive cache size exceeded. Clearing cache. size={}", positiveCache.size)
+            positiveCache.clear()
+        }
+        positiveCache[key] = CacheEntry(value = value, expiresAtEpochMs = nowMs() + POSITIVE_CACHE_TTL_MS)
+        negativeCache.remove(key)
+    }
+
+    private fun putNegativeCache(key: String) {
+        if (negativeCache.size >= MAX_NEGATIVE_CACHE_SIZE) {
+            log.warn("Negative cache size exceeded. Clearing cache. size={}", negativeCache.size)
+            negativeCache.clear()
+        }
+        negativeCache[key] = CacheEntry(value = Unit, expiresAtEpochMs = nowMs() + NEGATIVE_CACHE_TTL_MS)
+        positiveCache.remove(key)
     }
 
     private suspend fun searchLevelsInParallel(
