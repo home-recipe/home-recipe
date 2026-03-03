@@ -5,9 +5,10 @@ import com.example.home_recipe.controller.ingredient.dto.response.Source
 import com.example.home_recipe.global.exception.BusinessException
 import com.example.home_recipe.global.response.code.IngredientCode
 import kotlinx.coroutines.async
-import kotlinx.coroutines.cancel
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.sync.Semaphore
+import kotlinx.coroutines.sync.withPermit
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.http.HttpHeaders
@@ -32,6 +33,8 @@ class OpenApiIngredientService(
 
     companion object {
         private val log = LoggerFactory.getLogger(OpenApiIngredientService::class.java)
+        private const val MAX_CONCURRENT_EXTERNAL_CALLS = 8
+        private val externalCallSemaphore = Semaphore(MAX_CONCURRENT_EXTERNAL_CALLS)
 
         private const val LEVEL_FOOD_NM = "foodNm"
         private const val LEVEL_FOOD_LV4_NM = "foodLv4Nm"
@@ -119,7 +122,7 @@ class OpenApiIngredientService(
         keyword: String,
         serviceKey: String,
         apiUrl: String
-    ): List<IngredientResponse> {
+    ): List<IngredientResponse> = externalCallSemaphore.withPermit {
 
         val encodedKeyword = URLEncoder.encode(keyword, StandardCharsets.UTF_8)
 
@@ -133,7 +136,7 @@ class OpenApiIngredientService(
             .build(true)
             .toUri()
 
-        return try {
+        return@withPermit try {
             val response = webClient.get()
                 .uri(uri)
                 .header(HttpHeaders.ACCEPT, MediaType.APPLICATION_JSON_VALUE)
@@ -141,7 +144,6 @@ class OpenApiIngredientService(
                 .awaitBody<Map<String, Any>>()
 
             verifyFoodExistence(response, keyword)
-
         } catch (e: Exception) {
             throw BusinessException(IngredientCode.OPEN_API_INGREDIENT_ERROR_01, HttpStatus.INTERNAL_SERVER_ERROR)
         }
