@@ -4,6 +4,10 @@ import com.example.home_recipe.controller.ingredient.dto.response.IngredientResp
 import com.example.home_recipe.controller.ingredient.dto.response.Source
 import com.example.home_recipe.global.exception.BusinessException
 import com.example.home_recipe.global.response.code.IngredientCode
+import kotlinx.coroutines.async
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.channels.Channel
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.http.HttpHeaders
@@ -15,6 +19,7 @@ import org.springframework.web.reactive.function.client.awaitBody
 import org.springframework.web.util.UriComponentsBuilder
 import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
+import java.util.concurrent.ConcurrentLinkedQueue
 
 @Service
 class OpenApiIngredientService(
@@ -24,6 +29,7 @@ class OpenApiIngredientService(
     @Value("\${external-api.process-food.url}") private val processFoodUrl: String,
     webClientBuilder: WebClient.Builder
 ) {
+
     companion object {
         private val log = LoggerFactory.getLogger(OpenApiIngredientService::class.java)
 
@@ -60,15 +66,52 @@ class OpenApiIngredientService(
     private val webClient: WebClient = webClientBuilder.build()
 
     suspend fun searchExternalFood(keyword: String): List<IngredientResponse> {
-        for (level in FOOD_SEARCH_LEVELS) {
-            val result = callApiWithParam(level, keyword, rawFoodKey, rawFoodUrl)
-            if (result.isNotEmpty()) return result
+        val rawResult = searchLevelsInParallel(keyword, rawFoodKey, rawFoodUrl)
+        if (rawResult.isNotEmpty()) return rawResult
+
+        return searchLevelsInParallel(keyword, processFoodKey, processFoodUrl)
+    }
+
+    private suspend fun searchLevelsInParallel(
+        keyword: String,
+        serviceKey: String,
+        apiUrl: String
+    ): List<IngredientResponse> = coroutineScope {
+        val errors = ConcurrentLinkedQueue<Throwable>()
+        val channel = Channel<Pair<String, List<IngredientResponse>>>(capacity = Channel.BUFFERED)
+
+        val jobs = FOOD_SEARCH_LEVELS.map { level ->
+            async {
+                try {
+                    val result = callApiWithParam(level, keyword, serviceKey, apiUrl)
+                    channel.send(level to result)
+                } catch (e: Exception) {
+                    errors.add(e)
+                    log.error("OpenAPI 호출 실패 - apiUrl: {}, level: {}, keyword: {}", apiUrl, level, keyword, e)
+                    channel.send(level to emptyList())
+                }
+            }
         }
-        for (level in FOOD_SEARCH_LEVELS) {
-            val result = callApiWithParam(level, keyword, processFoodKey, processFoodUrl)
-            if (result.isNotEmpty()) return result
+
+        try {
+            repeat(jobs.size) {
+                val (level, result) = channel.receive()
+                if (result.isNotEmpty()) {
+                    log.info("OpenAPI 검색 성공(조기 종료) - apiUrl: {}, level: {}, keyword: {}", apiUrl, level, keyword)
+                    jobs.forEach { it.cancel() }
+                    return@coroutineScope result
+                }
+            }
+
+            if (errors.isNotEmpty()) {
+                throw BusinessException(IngredientCode.OPEN_API_INGREDIENT_ERROR_01, HttpStatus.INTERNAL_SERVER_ERROR)
+            }
+
+            emptyList()
+        } finally {
+            channel.close()
+            jobs.forEach { it.cancel() }
         }
-        return emptyList()
     }
 
     private suspend fun callApiWithParam(
@@ -100,11 +143,7 @@ class OpenApiIngredientService(
             verifyFoodExistence(response, keyword)
 
         } catch (e: Exception) {
-            log.error("OpenAPI 호출 실패 - keyword: {}", keyword, e)
-            throw BusinessException(
-                IngredientCode.OPEN_API_INGREDIENT_ERROR_01,
-                HttpStatus.INTERNAL_SERVER_ERROR
-            )
+            throw BusinessException(IngredientCode.OPEN_API_INGREDIENT_ERROR_01, HttpStatus.INTERNAL_SERVER_ERROR)
         }
     }
 
