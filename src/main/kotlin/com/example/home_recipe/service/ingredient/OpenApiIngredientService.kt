@@ -4,6 +4,8 @@ import com.example.home_recipe.controller.ingredient.dto.response.IngredientResp
 import com.example.home_recipe.controller.ingredient.dto.response.Source
 import com.github.benmanes.caffeine.cache.Cache
 import com.github.benmanes.caffeine.cache.Caffeine
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.channels.Channel
@@ -21,6 +23,7 @@ import org.springframework.web.util.UriComponentsBuilder
 import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
 import java.time.Duration
+import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.TimeUnit
 
 @Service
@@ -90,6 +93,8 @@ class OpenApiIngredientService(
             .expireAfterWrite(NEGATIVE_CACHE_TTL_MINUTES, TimeUnit.MINUTES)
             .build()
 
+    private val inFlight = ConcurrentHashMap<String, CompletableDeferred<List<IngredientResponse>>>()
+
     private data class SearchTarget(
         val apiUrl: String,
         val serviceKey: String,
@@ -104,23 +109,46 @@ class OpenApiIngredientService(
             log.debug("Positive cache hit - {}", cacheKey)
             return it
         }
+
         if (negativeCache.getIfPresent(cacheKey) == true) {
             log.debug("Negative cache hit - {}", cacheKey)
             return emptyList()
         }
 
-        val targets = buildTargets()
-
-        val result = searchTargetsInParallel(keyword, targets)
-        if (result.isNotEmpty()) {
-            positiveCache.put(cacheKey, result)
-            negativeCache.invalidate(cacheKey)
-            return result
+        val myDeferred = CompletableDeferred<List<IngredientResponse>>()
+        val existing = inFlight.putIfAbsent(cacheKey, myDeferred)
+        if (existing != null) {
+            log.debug("Single-flight join - keyword={}", cacheKey)
+            return try {
+                existing.await()
+            } catch (e: CancellationException) {
+                emptyList()
+            } catch (e: Exception) {
+                emptyList()
+            }
         }
 
-        negativeCache.put(cacheKey, true)
-        positiveCache.invalidate(cacheKey)
-        return emptyList()
+        return try {
+            val targets = buildTargets()
+            val result = searchTargetsInParallel(keyword, targets)
+
+            if (result.isNotEmpty()) {
+                positiveCache.put(cacheKey, result)
+                negativeCache.invalidate(cacheKey)
+            } else {
+                negativeCache.put(cacheKey, true)
+                positiveCache.invalidate(cacheKey)
+            }
+
+            myDeferred.complete(result)
+            result
+        } catch (e: Exception) {
+            log.warn("Single-flight leader failed (degraded to empty) - keyword={}", cacheKey, e)
+            myDeferred.complete(emptyList())
+            emptyList()
+        } finally {
+            inFlight.remove(cacheKey, myDeferred)
+        }
     }
 
     private fun buildTargets(): List<SearchTarget> {
@@ -161,7 +189,6 @@ class OpenApiIngredientService(
                     )
                     channel.send(target to result)
                 } catch (e: Exception) {
-                    // Commit 7a 정책 유지: 외부 오류는 empty로 degrade
                     log.warn(
                         "External API error (degraded to empty) - keyword={}, source={}, level={}",
                         keyword, target.sourceName, target.level
