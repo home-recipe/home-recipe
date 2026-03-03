@@ -5,7 +5,6 @@ import com.example.home_recipe.controller.ingredient.dto.response.Source
 import com.github.benmanes.caffeine.cache.Cache
 import com.github.benmanes.caffeine.cache.Caffeine
 import kotlinx.coroutines.CompletableDeferred
-import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.channels.Channel
@@ -49,34 +48,8 @@ class OpenApiIngredientService(
         private const val MAX_POSITIVE_CACHE_SIZE = 10_000L
         private const val MAX_NEGATIVE_CACHE_SIZE = 20_000L
 
-        private const val LEVEL_FOOD_NM = "foodNm"
-        private const val LEVEL_FOOD_LV4_NM = "foodLv4Nm"
-        private const val LEVEL_FOOD_LV5_NM = "foodLv5Nm"
-        private const val LEVEL_FOOD_LV6_NM = "foodLv6Nm"
-
-        private val FOOD_SEARCH_LEVELS = listOf(
-            LEVEL_FOOD_NM,
-            LEVEL_FOOD_LV4_NM,
-            LEVEL_FOOD_LV5_NM,
-            LEVEL_FOOD_LV6_NM
-        )
-
-        private const val QUERY_SERVICE_KEY = "serviceKey"
-        private const val QUERY_TYPE = "type"
-        private const val QUERY_PAGE_NO = "pageNo"
-        private const val QUERY_NUM_OF_ROWS = "numOfRows"
-
-        private const val RESPONSE_TYPE = "json"
-        private const val DEFAULT_PAGE_NO = 1
-        private const val DEFAULT_NUM_OF_ROWS = 5
-
-        private const val API_NO_DATA_MSG = "NODATA_ERROR"
-
-        private const val KEY_RESPONSE = "response"
-        private const val KEY_HEADER = "header"
-        private const val KEY_BODY = "body"
-        private const val KEY_ITEMS = "items"
-        private const val KEY_RESULT_MSG = "resultMsg"
+        private val FOOD_SEARCH_LEVELS =
+            listOf("foodNm", "foodLv4Nm", "foodLv5Nm", "foodLv6Nm")
     }
 
     private val webClient: WebClient = webClientBuilder.build()
@@ -93,17 +66,19 @@ class OpenApiIngredientService(
             .expireAfterWrite(NEGATIVE_CACHE_TTL_MINUTES, TimeUnit.MINUTES)
             .build()
 
-    private val inFlight = ConcurrentHashMap<String, CompletableDeferred<List<IngredientResponse>>>()
+    private val inFlight =
+        ConcurrentHashMap<String, CompletableDeferred<List<IngredientResponse>>>()
 
-    private data class SearchTarget(
-        val apiUrl: String,
-        val serviceKey: String,
-        val level: String,
-        val sourceName: String
-    )
+    private fun normalizeKeyword(keyword: String): String {
+        return keyword
+            .trim()
+            .replace(Regex("\\s+"), " ")
+            .lowercase()
+    }
 
     suspend fun searchExternalFood(keyword: String): List<IngredientResponse> {
-        val cacheKey = keyword
+
+        val cacheKey = normalizeKeyword(keyword)
 
         positiveCache.getIfPresent(cacheKey)?.let {
             log.debug("Positive cache hit - {}", cacheKey)
@@ -117,20 +92,17 @@ class OpenApiIngredientService(
 
         val myDeferred = CompletableDeferred<List<IngredientResponse>>()
         val existing = inFlight.putIfAbsent(cacheKey, myDeferred)
+
         if (existing != null) {
-            log.debug("Single-flight join - keyword={}", cacheKey)
-            return try {
-                existing.await()
-            } catch (e: CancellationException) {
-                emptyList()
-            } catch (e: Exception) {
-                emptyList()
-            }
+            log.debug("Single-flight join - {}", cacheKey)
+            return existing.await()
         }
 
         return try {
+
             val targets = buildTargets()
-            val result = searchTargetsInParallel(keyword, targets)
+
+            val result = searchTargetsInParallel(cacheKey, targets)
 
             if (result.isNotEmpty()) {
                 positiveCache.put(cacheKey, result)
@@ -142,8 +114,9 @@ class OpenApiIngredientService(
 
             myDeferred.complete(result)
             result
+
         } catch (e: Exception) {
-            log.warn("Single-flight leader failed (degraded to empty) - keyword={}", cacheKey, e)
+            log.warn("External API degraded to empty - {}", cacheKey, e)
             myDeferred.complete(emptyList())
             emptyList()
         } finally {
@@ -151,61 +124,49 @@ class OpenApiIngredientService(
         }
     }
 
-    private fun buildTargets(): List<SearchTarget> {
-        val rawTargets = FOOD_SEARCH_LEVELS.map { level ->
-            SearchTarget(
-                apiUrl = rawFoodUrl,
-                serviceKey = rawFoodKey,
-                level = level,
-                sourceName = "raw"
-            )
+    private data class Target(
+        val apiUrl: String,
+        val serviceKey: String,
+        val level: String
+    )
+
+    private fun buildTargets(): List<Target> {
+        val raw = FOOD_SEARCH_LEVELS.map {
+            Target(rawFoodUrl, rawFoodKey, it)
         }
-        val processTargets = FOOD_SEARCH_LEVELS.map { level ->
-            SearchTarget(
-                apiUrl = processFoodUrl,
-                serviceKey = processFoodKey,
-                level = level,
-                sourceName = "process"
-            )
+        val process = FOOD_SEARCH_LEVELS.map {
+            Target(processFoodUrl, processFoodKey, it)
         }
-        return rawTargets + processTargets
+        return raw + process
     }
 
     private suspend fun searchTargetsInParallel(
         keyword: String,
-        targets: List<SearchTarget>
+        targets: List<Target>
     ): List<IngredientResponse> = coroutineScope {
 
-        val channel = Channel<Pair<SearchTarget, List<IngredientResponse>>>(capacity = Channel.BUFFERED)
+        val channel = Channel<List<IngredientResponse>>(Channel.BUFFERED)
 
         val jobs = targets.map { target ->
             async {
                 try {
                     val result = callApi(
-                        paramName = target.level,
-                        keyword = keyword,
-                        serviceKey = target.serviceKey,
-                        apiUrl = target.apiUrl
+                        target.level,
+                        keyword,
+                        target.serviceKey,
+                        target.apiUrl
                     )
-                    channel.send(target to result)
+                    channel.send(result)
                 } catch (e: Exception) {
-                    log.warn(
-                        "External API error (degraded to empty) - keyword={}, source={}, level={}",
-                        keyword, target.sourceName, target.level
-                    )
-                    channel.send(target to emptyList())
+                    channel.send(emptyList())
                 }
             }
         }
 
         try {
             repeat(jobs.size) {
-                val (target, result) = channel.receive()
+                val result = channel.receive()
                 if (result.isNotEmpty()) {
-                    log.info(
-                        "OpenAPI hit -> early return - keyword={}, source={}, level={}",
-                        keyword, target.sourceName, target.level
-                    )
                     jobs.forEach { it.cancel() }
                     return@coroutineScope result
                 }
@@ -224,15 +185,16 @@ class OpenApiIngredientService(
         apiUrl: String
     ): List<IngredientResponse> = semaphore.withPermit {
 
-        val encodedKeyword = URLEncoder.encode(keyword, StandardCharsets.UTF_8)
+        val encodedKeyword =
+            URLEncoder.encode(keyword, StandardCharsets.UTF_8)
 
         val uri = UriComponentsBuilder
             .fromHttpUrl(apiUrl)
-            .queryParam(QUERY_SERVICE_KEY, serviceKey)
-            .queryParam(QUERY_TYPE, RESPONSE_TYPE)
+            .queryParam("serviceKey", serviceKey)
+            .queryParam("type", "json")
             .queryParam(paramName, encodedKeyword)
-            .queryParam(QUERY_PAGE_NO, DEFAULT_PAGE_NO)
-            .queryParam(QUERY_NUM_OF_ROWS, DEFAULT_NUM_OF_ROWS)
+            .queryParam("pageNo", 1)
+            .queryParam("numOfRows", 5)
             .build(true)
             .toUri()
 
@@ -240,7 +202,8 @@ class OpenApiIngredientService(
             .uri(uri)
             .header(HttpHeaders.ACCEPT, MediaType.APPLICATION_JSON_VALUE)
             .retrieve()
-            .bodyToMono(object : ParameterizedTypeReference<Map<String, Any>>() {})
+            .bodyToMono(object :
+                ParameterizedTypeReference<Map<String, Any>>() {})
             .timeout(Duration.ofMillis(EXTERNAL_API_TIMEOUT_MS))
             .awaitSingle()
 
@@ -252,19 +215,17 @@ class OpenApiIngredientService(
         keyword: String
     ): List<IngredientResponse> {
 
-        val responseMap = response[KEY_RESPONSE] as? Map<*, *> ?: return emptyList()
-        val header = responseMap[KEY_HEADER] as? Map<*, *>
-        val body = responseMap[KEY_BODY] as? Map<*, *>
+        val responseMap = response["response"] as? Map<*, *>
+            ?: return emptyList()
 
-        val resultMsg = header?.get(KEY_RESULT_MSG) as? String
-        if (resultMsg == API_NO_DATA_MSG) {
-            return emptyList()
-        }
+        val header = responseMap["header"] as? Map<*, *>
+        val body = responseMap["body"] as? Map<*, *>
 
-        val items = body?.get(KEY_ITEMS) as? List<*>
-        if (items.isNullOrEmpty()) {
-            return emptyList()
-        }
+        val resultMsg = header?.get("resultMsg") as? String
+        if (resultMsg == "NODATA_ERROR") return emptyList()
+
+        val items = body?.get("items") as? List<*>
+        if (items.isNullOrEmpty()) return emptyList()
 
         return listOf(
             IngredientResponse(
