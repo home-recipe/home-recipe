@@ -163,6 +163,7 @@ class RefrigeratorServiceTest {
         val egg = Ingredient(IngredientCategory.ETC, "계란").apply { id = 1L }
         val soySauce = Ingredient(IngredientCategory.SPICE, "간장").apply { id = 2L }
         val rice = Ingredient(IngredientCategory.GRAIN, "쌀").apply { id = 3L }
+        val cookingOil = Ingredient(IngredientCategory.SPICE, "식용유").apply { id = 4L }
 
         whenever(
             ingredientRepository.findByCategoryAndName(IngredientCategory.ETC, "계란")
@@ -175,6 +176,10 @@ class RefrigeratorServiceTest {
         whenever(
             ingredientRepository.findByCategoryAndName(IngredientCategory.GRAIN, "쌀")
         ).thenReturn(rice)
+
+        whenever(
+            ingredientRepository.findByCategoryAndName(IngredientCategory.SPICE, "식용유")
+        ).thenReturn(cookingOil)
 
         // 냉장고 저장 시, 그대로 인자로 들어온 객체를 반환하도록 설정
         doAnswer { inv -> inv.getArgument<Refrigerator>(0) }
@@ -192,7 +197,7 @@ class RefrigeratorServiceTest {
         // 2) 기본 재료 이름이 다 들어가 있는지
         Assertions.assertThat(fridge.ingredients)
             .extracting<String> { it.name }
-            .containsExactlyInAnyOrder("계란", "간장", "쌀")
+            .containsExactlyInAnyOrder("계란", "간장", "쌀", "식용유")
 
         // 3) repository 메서드가 실제로 호출됐는지
         verify(ingredientRepository, times(1))
@@ -201,6 +206,8 @@ class RefrigeratorServiceTest {
             .findByCategoryAndName(IngredientCategory.SPICE, "간장")
         verify(ingredientRepository, times(1))
             .findByCategoryAndName(IngredientCategory.GRAIN, "쌀")
+        verify(ingredientRepository, times(1))
+            .findByCategoryAndName(IngredientCategory.SPICE, "식용유")
 
         // 이 시나리오에서는 이미 DB에 있는 재료라고 가정했으니 save는 안 불려야 함
         verify(ingredientRepository, never()).save(any<Ingredient>())

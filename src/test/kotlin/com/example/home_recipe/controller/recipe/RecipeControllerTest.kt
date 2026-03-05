@@ -1,7 +1,7 @@
 package com.example.home_recipe.controller.recipe
 
 import com.example.home_recipe.controller.recipe.response.RecipeDecision
-import com.example.home_recipe.controller.recipe.response.RecipeDetail
+import com.example.home_recipe.controller.recipe.response.RecipeDetailResponse
 import com.example.home_recipe.controller.recipe.response.RecipesResponse
 import com.example.home_recipe.service.recipe.RecipeService
 import org.junit.jupiter.api.DisplayName
@@ -51,7 +51,7 @@ class RecipeControllerTest {
             decision = RecipeDecision.COOK,
             reason = "냉장고 재료로 충분히 조리 가능",
             recipes = listOf(
-                RecipeDetail(
+                RecipeDetailResponse(
                     recipeName = "김치볶음밥",
                     ingredients = listOf("김치", "밥"),
                     steps = listOf("김치를 볶는다", "밥을 넣고 볶는다")

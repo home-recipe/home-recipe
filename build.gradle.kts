@@ -59,8 +59,11 @@ dependencies {
     implementation ("io.micrometer:micrometer-registry-prometheus")
 
 	implementation("com.mysql:mysql-connector-j")
-	implementation("com.openai:openai-java:4.8.0")
 	implementation("com.fasterxml.jackson.core:jackson-databind")
+
+	implementation(platform("software.amazon.awssdk:bom:2.25.16"))
+	implementation("software.amazon.awssdk:s3")
+	implementation("software.amazon.awssdk:sts")
 
 	implementation("org.springframework.boot:spring-boot-starter-aop")
 
