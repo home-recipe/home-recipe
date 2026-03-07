@@ -15,7 +15,4 @@ data class LoginRequest(
         max = 20,
         message = "LOGIN_ERROR_003"
     ) val password: String,
-
-    @field:NotBlank(message = "AUTH_010")
-    val challenge: String,
 )

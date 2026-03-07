@@ -2,7 +2,7 @@ package com.example.home_recipe.service.auth
 
 import com.example.home_recipe.controller.auth.dto.request.LoginRequest
 import com.example.home_recipe.controller.auth.dto.response.AccessTokenResponse
-import com.example.home_recipe.controller.auth.dto.response.LoginCodeResponse
+import com.example.home_recipe.controller.auth.dto.response.LoginResponse
 import com.example.home_recipe.controller.auth.dto.response.TokenResponse
 import com.example.home_recipe.domain.auth.oauth2.AuthCodeEntry
 import com.example.home_recipe.domain.auth.config.JwtTokenProvider
@@ -30,15 +30,17 @@ class AuthService(
 
     private val log = LoggerFactory.getLogger(javaClass)
     @Transactional
-    fun login(request: LoginRequest): LoginCodeResponse {
+    fun login(request: LoginRequest): LoginResponse {
         val user = userService.getUser(request.email)
         checkPassword(request.password, user.password)
 
-        val authorizationCode = UUID.randomUUID().toString()
-        authCodeCacheService.store(authorizationCode, AuthCodeEntry(challenge = request.challenge, email = user.email))
-        log.info("로그인 인가 코드 발급 완료: {}", authorizationCode)
+        val accessToken = jwtTokenProvider.createAccessToken(user.email, user.role)
+        val refreshToken = jwtTokenProvider.createRefreshToken(user.email, user.role)
+        tokenService.synchronizeRefreshToken(user, refreshToken)
 
-        return LoginCodeResponse(code = authorizationCode)
+        log.info("일반 로그인 토큰 발급 완료 - email: {}", user.email)
+
+        return LoginResponse(accessToken = accessToken, refreshToken = refreshToken, role = user.role)
     }
 
     private fun checkPassword(rawPassword: String, encryptedPassword: String) {
