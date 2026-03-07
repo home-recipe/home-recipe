@@ -67,8 +67,9 @@ dependencies {
 
 	implementation("org.springframework.boot:spring-boot-starter-aop")
 
+  implementation("com.github.ben-manes.caffeine:caffeine:3.2.3")
 	implementation("org.springframework.boot:spring-boot-starter-cache")
-	implementation("com.github.ben-manes.caffeine:caffeine")
+
 }
 
 kotlin {

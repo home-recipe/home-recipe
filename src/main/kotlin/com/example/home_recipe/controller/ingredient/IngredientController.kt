@@ -4,11 +4,9 @@ import com.example.home_recipe.controller.ingredient.dto.request.CreateIngredien
 import com.example.home_recipe.controller.ingredient.dto.request.CreateIngredientRequest
 import com.example.home_recipe.controller.ingredient.dto.request.UpdateIngredientRequest
 import com.example.home_recipe.controller.ingredient.dto.response.IngredientResponse
-import com.example.home_recipe.controller.ingredient.dto.response.OpenApiIngredientResponse
 import com.example.home_recipe.global.response.ApiResponse
 import com.example.home_recipe.global.response.code.IngredientCode
 import com.example.home_recipe.service.ingredient.IngredientService
-import com.example.home_recipe.service.ingredient.OpenApiIngredientService
 import jakarta.validation.Valid
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
