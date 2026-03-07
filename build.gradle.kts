@@ -69,6 +69,13 @@ dependencies {
 
 	implementation("org.springframework.boot:spring-boot-starter-cache")
 	implementation("com.github.ben-manes.caffeine:caffeine")
+
+	//임베딩 관련 라이브러리
+	implementation ("dev.langchain4j:langchain4j:0.31.0")
+	implementation ("ai.djl:api:0.28.0")
+	implementation ("dev.langchain4j:langchain4j-embeddings-all-minilm-l6-v2:0.31.0")
+	implementation ("org.springframework.boot:spring-boot-starter")
+	implementation ("ai.djl.onnxruntime:onnxruntime-engine:0.28.0")
 }
 
 kotlin {
