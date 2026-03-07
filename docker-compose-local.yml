@@ -1,0 +1,32 @@
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: home-recipe-mysql-local
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: home_recipe
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql-local-data:/var/lib/mysql
+    restart: unless-stopped
+
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.12.0
+    container_name: home-recipe-es-local
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - ES_JAVA_OPTS=-Xms512m -Xmx512m
+    ports:
+      - "9200:9200"
+      - "9300:9300"
+    volumes:
+      - es-local-data:/usr/share/elasticsearch/data
+    restart: unless-stopped
+
+volumes:
+  mysql-local-data:
+    driver: local
+  es-local-data:
+    driver: local

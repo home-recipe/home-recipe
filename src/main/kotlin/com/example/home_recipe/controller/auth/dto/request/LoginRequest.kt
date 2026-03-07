@@ -14,5 +14,5 @@ data class LoginRequest(
         min = 8,
         max = 20,
         message = "LOGIN_ERROR_003"
-    ) val password: String
+    ) val password: String,
 )

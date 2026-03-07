@@ -15,6 +15,8 @@ class HttpCookieOAuth2AuthorizationRequestRepository :
 
     companion object {
         private const val COOKIE_NAME = "OAUTH2_AUTH_REQUEST"
+        const val CLIENT_TYPE_COOKIE = "OAUTH2_CLIENT_TYPE"
+        const val PKCE_CHALLENGE_PARAM = "challenge"
         private const val COOKIE_EXPIRE_SECONDS = 180
         private const val COOKIE_PATH = "/"
         private const val EMPTY_VALUE = ""
@@ -32,12 +34,28 @@ class HttpCookieOAuth2AuthorizationRequestRepository :
     ) {
         if (authorizationRequest == null) {
             deleteCookie(response)
+            deleteClientTypeCookie(response)
             return
         }
 
-        val value: String = serialize(authorizationRequest)
+        val challenge = request.getParameter(PKCE_CHALLENGE_PARAM)
+        val requestToSave = if (challenge != null) {
+            val additionalParams = authorizationRequest.additionalParameters.toMutableMap()
+            additionalParams[PKCE_CHALLENGE_PARAM] = challenge
+            OAuth2AuthorizationRequest.from(authorizationRequest)
+                .additionalParameters(additionalParams)
+                .build()
+        } else {
+            authorizationRequest
+        }
 
+        val value: String = serialize(requestToSave)
         addCookie(response, value)
+
+        val clientType = request.getParameter("state")
+        if (clientType != null) {
+            addClientTypeCookie(response, clientType)
+        }
     }
 
     override fun removeAuthorizationRequest(
@@ -56,6 +74,11 @@ class HttpCookieOAuth2AuthorizationRequestRepository :
         response: HttpServletResponse
     ) {
         deleteCookie(response)
+        deleteClientTypeCookie(response)
+    }
+
+    fun getClientType(request: HttpServletRequest): String? {
+        return request.cookies?.firstOrNull { it.name == CLIENT_TYPE_COOKIE }?.value
     }
 
     private fun addCookie(response: HttpServletResponse, value: String) {
@@ -70,6 +93,20 @@ class HttpCookieOAuth2AuthorizationRequestRepository :
         response.addHeader(
             "Set-Cookie",
             "OAUTH2_AUTH_REQUEST=; Path=/; Max-Age=0; HttpOnly; Secure; SameSite=None"
+        )
+    }
+
+    private fun addClientTypeCookie(response: HttpServletResponse, clientType: String) {
+        response.addHeader(
+            "Set-Cookie",
+            "$CLIENT_TYPE_COOKIE=$clientType; Path=/; Max-Age=$COOKIE_EXPIRE_SECONDS; HttpOnly; Secure; SameSite=None"
+        )
+    }
+
+    private fun deleteClientTypeCookie(response: HttpServletResponse) {
+        response.addHeader(
+            "Set-Cookie",
+            "$CLIENT_TYPE_COOKIE=; Path=/; Max-Age=0; HttpOnly; Secure; SameSite=None"
         )
     }
 
