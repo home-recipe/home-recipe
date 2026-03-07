@@ -67,8 +67,8 @@ dependencies {
 
 	implementation("org.springframework.boot:spring-boot-starter-aop")
 
+    implementation("com.github.ben-manes.caffeine:caffeine:3.2.3")
 	implementation("org.springframework.boot:spring-boot-starter-cache")
-	implementation("com.github.ben-manes.caffeine:caffeine")
 
 	//임베딩 관련 라이브러리
 	implementation ("dev.langchain4j:langchain4j:0.31.0")
