@@ -2,15 +2,27 @@ package com.example.home_recipe.service.ingredient
 
 import com.example.home_recipe.controller.ingredient.dto.response.IngredientResponse
 import com.example.home_recipe.controller.ingredient.dto.response.Source
-import com.example.home_recipe.global.exception.BusinessException
-import com.example.home_recipe.global.response.code.IngredientCode
+import com.github.benmanes.caffeine.cache.Cache
+import com.github.benmanes.caffeine.cache.Caffeine
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.async
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.reactor.awaitSingle
+import kotlinx.coroutines.sync.Semaphore
+import kotlinx.coroutines.sync.withPermit
+import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
-import org.springframework.http.HttpStatus
+import org.springframework.http.HttpHeaders
+import org.springframework.http.MediaType
 import org.springframework.stereotype.Service
 import org.springframework.web.reactive.function.client.WebClient
-import org.springframework.web.reactive.function.client.awaitBody
-import java.net.URI
+import org.springframework.web.util.UriComponentsBuilder
 import java.net.URLEncoder
+import java.nio.charset.StandardCharsets
+import java.time.Duration
+import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.TimeUnit
 
 @Service
 class OpenApiIngredientService(
@@ -18,79 +30,195 @@ class OpenApiIngredientService(
     @Value("\${external-api.process-food.service-key}") private val processFoodKey: String,
     @Value("\${external-api.raw-food.url}") private val rawFoodUrl: String,
     @Value("\${external-api.process-food.url}") private val processFoodUrl: String,
-    private val webClientBuilder: WebClient.Builder
+    webClientBuilder: WebClient.Builder
 ) {
-    companion object {
-        private val FOOD_SEARCH_LEVELS = listOf("foodNm", "foodLv4Nm", "foodLv5Nm", "foodLv6Nm")
 
-        private const val RESPONSE_TYPE = "json"
-        private const val DEFAULT_PAGE_NO = 1
-        private const val DEFAULT_NUM_OF_ROWS = 5
-        private const val ENCODING_TYPE = "UTF-8"
-        private const val HEADER_NAME = "Accept"
-        private const val HEADER_VALUE = "application/json"
+    companion object {
+        private val log = LoggerFactory.getLogger(OpenApiIngredientService::class.java)
+
+        private const val MAX_CONCURRENT_EXTERNAL_CALLS = 8
+        private val semaphore = Semaphore(MAX_CONCURRENT_EXTERNAL_CALLS)
+
+        private const val EXTERNAL_API_TIMEOUT_MS = 800L
+
+        private const val POSITIVE_CACHE_TTL_MINUTES = 10L
+        private const val NEGATIVE_CACHE_TTL_MINUTES = 5L
+
+        private const val MAX_POSITIVE_CACHE_SIZE = 10_000L
+        private const val MAX_NEGATIVE_CACHE_SIZE = 20_000L
 
         private const val API_NO_DATA_MSG = "NODATA_ERROR"
 
-        private const val KEY_RESPONSE = "response"
-        private const val KEY_HEADER = "header"
-        private const val KEY_BODY = "body"
-        private const val KEY_ITEMS = "items"
-        private const val KEY_RESULT_MSG = "resultMsg"
+        private val FOOD_SEARCH_LEVELS =
+            listOf("foodNm", "foodLv4Nm", "foodLv5Nm", "foodLv6Nm")
     }
+
+    private val webClient: WebClient = webClientBuilder.build()
+
+    private val positiveCache: Cache<String, List<IngredientResponse>> =
+        Caffeine.newBuilder()
+            .maximumSize(MAX_POSITIVE_CACHE_SIZE)
+            .expireAfterWrite(POSITIVE_CACHE_TTL_MINUTES, TimeUnit.MINUTES)
+            .build()
+
+    private val negativeCache: Cache<String, Boolean> =
+        Caffeine.newBuilder()
+            .maximumSize(MAX_NEGATIVE_CACHE_SIZE)
+            .expireAfterWrite(NEGATIVE_CACHE_TTL_MINUTES, TimeUnit.MINUTES)
+            .build()
+
+    private val inFlight =
+        ConcurrentHashMap<String, CompletableDeferred<List<IngredientResponse>>>()
+
+    private fun normalizeKeyword(keyword: String): String =
+        keyword.trim().replace(Regex("\\s+"), " ").lowercase()
 
     suspend fun searchExternalFood(keyword: String): List<IngredientResponse> {
-        for (level in FOOD_SEARCH_LEVELS) {
-            val result = callApiWithParam(level, keyword, rawFoodKey, rawFoodUrl)
-            if (result.isNotEmpty()) return result
-        }
-        for (level in FOOD_SEARCH_LEVELS) {
-            val result = callApiWithParam(level, keyword, processFoodKey, processFoodUrl)
-            if (result.isNotEmpty()) return result
-        }
-        return emptyList()
-    }
 
-    private suspend fun callApiWithParam(paramName: String, keyword: String, serviceKey: String, apiUrl: String)
-            : List<IngredientResponse> {
-        val encodedKeyword = URLEncoder.encode(keyword, ENCODING_TYPE)
+        val cacheKey = normalizeKeyword(keyword)
 
-        val finalUrl = "${apiUrl}?serviceKey=$serviceKey" +
-                "&type=$RESPONSE_TYPE" +
-                "&$paramName=$encodedKeyword" +
-                "&pageNo=$DEFAULT_PAGE_NO" +
-                "&numOfRows=$DEFAULT_NUM_OF_ROWS"
+        positiveCache.getIfPresent(cacheKey)?.let { return it }
+        if (negativeCache.getIfPresent(cacheKey) == true) return emptyList()
+
+        val myDeferred = CompletableDeferred<List<IngredientResponse>>()
+        val existing = inFlight.putIfAbsent(cacheKey, myDeferred)
+
+        if (existing != null) return existing.await()
 
         return try {
-            val response = webClientBuilder.build().get()
-                .uri(URI(finalUrl))
-                .header(HEADER_NAME, HEADER_VALUE)
-                .retrieve()
-                .awaitBody<Map<String, Any>>()
-            verifyFoodExistence(response, keyword)
-        } catch (e: Exception) {
-            throw BusinessException(IngredientCode.OPEN_API_INGREDIENT_ERROR_01, HttpStatus.INTERNAL_SERVER_ERROR)
+
+            val targets = buildTargets()
+            val result = searchTargetsInParallel(cacheKey, targets)
+
+            if (result.isNotEmpty()) {
+                positiveCache.put(cacheKey, result)
+                negativeCache.invalidate(cacheKey)
+            } else {
+                negativeCache.put(cacheKey, true)
+            }
+
+            myDeferred.complete(result)
+            result
+
+        } finally {
+            inFlight.remove(cacheKey, myDeferred)
         }
     }
 
-    private fun verifyFoodExistence(response: Map<String, Any>, keyword: String): List<IngredientResponse> {
-        val responseMap = response[KEY_RESPONSE] as? Map<String, Any> ?: return emptyList()
-        val header = responseMap[KEY_HEADER] as? Map<String, Any>
-        val body = responseMap[KEY_BODY] as? Map<String, Any>
+    private data class Target(
+        val apiUrl: String,
+        val serviceKey: String,
+        val level: String
+    )
 
-        val resultMsg = header?.get(KEY_RESULT_MSG) as? String
-        if (resultMsg == API_NO_DATA_MSG) {
-            println("검색 결과 없음: $keyword")
-            return emptyList()
+    private fun buildTargets(): List<Target> {
+        val raw = FOOD_SEARCH_LEVELS.map {
+            Target(rawFoodUrl, rawFoodKey, it)
+        }
+        val process = FOOD_SEARCH_LEVELS.map {
+            Target(processFoodUrl, processFoodKey, it)
+        }
+        return raw + process
+    }
+
+    private suspend fun searchTargetsInParallel(
+        keyword: String,
+        targets: List<Target>
+    ): List<IngredientResponse> = coroutineScope {
+
+        val channel = Channel<List<IngredientResponse>>(Channel.BUFFERED)
+
+        val jobs = targets.map { target ->
+            async {
+                try {
+                    val result = callApi(
+                        target.level,
+                        keyword,
+                        target.serviceKey,
+                        target.apiUrl
+                    )
+                    channel.send(result)
+                } catch (e: Exception) {
+                    log.warn("External API error (degraded) - {}", keyword)
+                    channel.send(emptyList())
+                }
+            }
         }
 
-        val items = body?.get(KEY_ITEMS) as? List<Any>
-        if (items.isNullOrEmpty()) {
-            println("결과 아이템이 비어있음: $keyword")
+        try {
+            repeat(jobs.size) {
+                val result = channel.receive()
+                if (result.isNotEmpty()) {
+                    jobs.forEach { it.cancel() }
+                    return@coroutineScope result
+                }
+            }
+            emptyList()
+        } finally {
+            channel.close()
+            jobs.forEach { it.cancel() }
+        }
+    }
+
+    private suspend fun callApi(
+        paramName: String,
+        keyword: String,
+        serviceKey: String,
+        apiUrl: String
+    ): List<IngredientResponse> = semaphore.withPermit {
+
+        val encodedKeyword =
+            URLEncoder.encode(keyword, StandardCharsets.UTF_8)
+
+        val uri = UriComponentsBuilder
+            .fromHttpUrl(apiUrl)
+            .queryParam("serviceKey", serviceKey)
+            .queryParam("type", "json")
+            .queryParam(paramName, encodedKeyword)
+            .queryParam("pageNo", 1)
+            .queryParam("numOfRows", 5)
+            .build(true)
+            .toUri()
+
+        val response = webClient.get()
+            .uri(uri)
+            .header(HttpHeaders.ACCEPT, MediaType.APPLICATION_JSON_VALUE)
+            .retrieve()
+            .bodyToMono(OpenApiFoodResponse::class.java)
+            .timeout(Duration.ofMillis(EXTERNAL_API_TIMEOUT_MS))
+            .awaitSingle()
+
+        return verifyFoodExistence(response, keyword)
+    }
+
+    private fun verifyFoodExistence(
+        response: OpenApiFoodResponse,
+        keyword: String
+    ): List<IngredientResponse> {
+
+        val wrapper = response.response ?: return emptyList()
+
+        if (wrapper.header?.resultMsg == API_NO_DATA_MSG)
             return emptyList()
+
+        val items = wrapper.body?.items
+
+        val isEmpty = when (items) {
+            null -> true
+            is Collection<*> -> items.isEmpty()
+            is Map<*, *> -> items.isEmpty()
+            else -> false
         }
 
-        println("--- 검증 성공: '$keyword'를 리스트에 담습니다 ---")
-        return listOf(IngredientResponse(null, null, name = keyword, Source.OPEN_API))
+        if (isEmpty) return emptyList()
+
+        return listOf(
+            IngredientResponse(
+                id = null,
+                category = null,
+                name = keyword,
+                source = Source.OPEN_API
+            )
+        )
     }
 }
