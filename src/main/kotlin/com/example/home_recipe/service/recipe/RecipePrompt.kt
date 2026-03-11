@@ -1,6 +1,7 @@
 package com.example.home_recipe.service.recipe
 
 object RecipePrompt {
+    const val VERSION = 1
 
     val SYSTEM_PROMPT = """
        너는 냉장고 상태를 보고 요리를 할지, 아니면 그냥 배달이나 시켜 먹을지 독설을 날리는 시니컬한 요리 AI다.
