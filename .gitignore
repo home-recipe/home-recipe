@@ -39,6 +39,9 @@ out/
 ### Kotlin ###
 .kotlin
 
+### Model files ###
+*.onnx
+
 ###.env ###
 .env
 !.env.example
