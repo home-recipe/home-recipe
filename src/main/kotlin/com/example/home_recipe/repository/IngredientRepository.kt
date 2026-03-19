@@ -19,4 +19,6 @@ interface IngredientRepository : JpaRepository<Ingredient, Long> {
         """
     )
     fun findIngredientContainingName(@Param("name") name: String): List<Ingredient>
+
+    fun findByName(name: String): Ingredient?
 }

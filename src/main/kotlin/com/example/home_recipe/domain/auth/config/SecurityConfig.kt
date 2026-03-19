@@ -46,8 +46,7 @@ class SecurityConfig(
         return NimbusJwtDecoder.withSecretKey(key).build()
     }
 
-    @Bean
-    fun jwtAuthenticationConverter(): Converter<Jwt, AbstractAuthenticationToken> {
+    private fun jwtAuthenticationConverter(): Converter<Jwt, AbstractAuthenticationToken> {
         return Converter { jwt ->
             val email = jwt.getClaim<String>(EMAIL) ?: jwt.subject
             val rawRole = jwt.getClaim<String>("role") ?: "USER"

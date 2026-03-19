@@ -17,7 +17,7 @@ jwt:
   refresh-expiration: ${JWT_REFRESH_EXPIRATION}
 
 gemini:
-  api-key: ${GEMINI_API_KEY}
+  api-key: ${GEMINI_API_KEY:}
 
 cloud:
   aws:
