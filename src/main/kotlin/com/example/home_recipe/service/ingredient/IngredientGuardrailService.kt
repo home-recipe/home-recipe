@@ -10,6 +10,12 @@ import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import java.nio.file.Paths
 
+data class GuardrailEvaluation(
+    val foodSim: Double,
+    val nonFoodSim: Double,
+    val result: GuardrailResult
+)
+
 @Service
 class IngredientGuardrailService {
 
@@ -19,6 +25,7 @@ class IngredientGuardrailService {
     private var foodAnchor: Embedding? = null
     private var nonFoodAnchor: Embedding? = null
     private var initialized = false
+    private val defaultStrategy: IngredientGuardrailStrategy = DiffBasedStrategy();
 
     @PostConstruct
     fun init() {
@@ -52,23 +59,36 @@ class IngredientGuardrailService {
             log.info("[Guardrail] 입력: '{}' | 음식: {} | 비음식: {}",
                 userInput, "%.4f".format(foodSim), "%.4f".format(nonFoodSim))
 
-            // 1. [차단] 비음식이 압도적으로 높은 경우 (예: 2배 이상)
-            if (nonFoodSim > foodSim * 2.0) {
-                log.warn("[Guardrail] 확실한 비음식으로 판단하여 차단: '{}'", userInput)
+            val diff = foodSim - nonFoodSim
+
+            // 1. [차단] 비음식 유사도가 음식보다 높은 경우
+            if (diff < -0.05) {
+                log.warn("[Guardrail] 비음식으로 판단하여 차단: '{}' (차이: {})}", userInput, "%.4f".format(diff))
                 return false
             }
-            // 2. [통과] 음식이 확실히 높은 경우
-            if (foodSim > nonFoodSim && foodSim > 0.4) {
-                log.info("[Guardrail] 로컬 모델 판단 통과: '{}'", userInput)
+            // 2. [통과] 음식 유사도가 확실히 높은 경우
+            if (diff > 0.05) {
+                log.info("[Guardrail] 로컬 모델 판단 통과: '{}' (차이: {})", userInput, "%.4f".format(diff))
                 return true
             }
-            // 3. [LLM 위임] 판단이 어렵거나(점수 차이가 적음) 오타가 의심되는 경우
-            log.info("[Guardrail] 판단 모호 - Gemini에게 최종 확인 요청: '{}'", userInput)
+            // 3. [LLM 위임] 차이가 미미하여 판단이 어려운 경우 (-0.05 ~ 0.05)
+            log.info("[Guardrail] 판단 모호 - Gemini에게 최종 확인 요청: '{}' (차이: {})", userInput, "%.4f".format(diff))
             return true
 
         } catch (e: Exception) {
             log.error("[Guardrail] 판별 오류: {}", e.message)
             true
         }
+    }
+
+    fun evaluate(userInput: String, strategy: IngredientGuardrailStrategy = defaultStrategy): GuardrailEvaluation {
+        check(initialized) { "Guardrail 엔진이 초기화되지 않았습니다." }
+
+        val userEmbedding = embeddingModel!!.embed(userInput).content()
+        val foodSim = CosineSimilarity.between(userEmbedding, foodAnchor!!)
+        val nonFoodSim = CosineSimilarity.between(userEmbedding, nonFoodAnchor!!)
+        val result = strategy.evaluate(foodSim, nonFoodSim)
+
+        return GuardrailEvaluation(foodSim, nonFoodSim, result)
     }
 }

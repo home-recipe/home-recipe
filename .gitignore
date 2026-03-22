@@ -51,3 +51,7 @@ application-test.yml
 application-test-local.yml
 application-local.yml
 application-prod.yml
+
+# macOS system files
+.DS_Store
+**/.DS_Store
